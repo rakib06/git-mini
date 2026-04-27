@@ -37,6 +37,7 @@ class CreateBareRepoRequest(BaseModel):
     """Request to create a bare repository."""
 
     name: str
+    initialize_with_readme: bool = False
 
 
 class LinkLocalRepoRequest(BaseModel):
@@ -84,7 +85,7 @@ async def create_bare_repository(req: CreateBareRepoRequest) -> dict:
     if not req.name:
         raise HTTPException(status_code=400, detail="name is required")
 
-    result = GitService.create_bare_repo(req.name)
+    result = GitService.create_bare_repo(req.name, req.initialize_with_readme)
 
     if result["status"] == "error":
         raise HTTPException(status_code=400, detail=result["message"])

@@ -279,6 +279,52 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
+// ─── Create Bare Repository ──────────────────────────────────────
+
+function openCreateRepoDialog() {
+    const dialog = document.getElementById('createRepoDialog');
+    if (dialog) dialog.style.display = 'block';
+}
+
+function closeCreateRepoDialog() {
+    const dialog = document.getElementById('createRepoDialog');
+    if (dialog) dialog.style.display = 'none';
+    const nameInput = document.getElementById('createRepoName');
+    const readmeCheckbox = document.getElementById('initWithReadme');
+    if (nameInput) nameInput.value = '';
+    if (readmeCheckbox) readmeCheckbox.checked = true;
+}
+
+async function createBareRepo(event) {
+    event.preventDefault();
+    const name = document.getElementById('createRepoName')?.value?.trim();
+    const initWithReadme = document.getElementById('initWithReadme')?.checked ?? true;
+
+    if (!name) {
+        showNotification('Repository name is required', 'warning');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/repositories/create-bare`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, initialize_with_readme: initWithReadme })
+        });
+
+        if (response.ok) {
+            showNotification('Repository created successfully', 'success');
+            closeCreateRepoDialog();
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+            showNotification(`Error: ${error.detail || 'Failed to create repository'}`, 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
 // ─── Link Local Repository ───────────────────────────────────────
 
 function openLinkLocalDialog() {

@@ -22,6 +22,44 @@ class GitService:
     """Handle all Git operations."""
 
     @staticmethod
+    def add_safe_directory(repo_path: str) -> bool:
+        """
+        Add repo path to global Git safe.directory list.
+        Required for LAN / shared folders / UNC paths.
+
+        Example:
+            //192.168.0.123/share/reposv2/005.git
+        """
+        try:
+            safe_path = str(Path(repo_path))
+
+            logger.info(f"Adding safe.directory: {safe_path}")
+
+            subprocess.run(
+                [
+                    "git",
+                    "config",
+                    "--global",
+                    "--add",
+                    "safe.directory",
+                    safe_path,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            logger.info(f"safe.directory added: {safe_path}")
+            return True
+
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to add safe.directory: {e.stderr}")
+            return False
+
+        except Exception as e:
+            logger.error(f"Unexpected safe.directory error: {e}")
+            return False
+    @staticmethod
     def is_bare_repo(path: Path) -> bool:
         """Check if path is a bare Git repository."""
         try:
@@ -30,24 +68,22 @@ class GitService:
         except Exception:
             return False
 
+   
     @staticmethod
-    def clone_or_fetch(remote_path: str, repo_name: str) -> Optional[Path]:
-        """
-        Clone repository from remote if not exists, or fetch+pull if exists.
+    def clone_or_fetch(
+        remote_path: str,
+        repo_name: str,
+        sync_all_branches: bool = True
+    ) -> Optional[Path]:
+       
 
-        Args:
-            remote_path: Path to bare repository on LAN share
-            repo_name: Local repository name
-
-        Returns:
-            Path to local cloned repository, or None on error
-        """
-        # Validate paths
+        # Validate remote path
         validated_remote = validate_repo_path(remote_path)
         if not validated_remote:
             logger.error(f"Remote path validation failed: {remote_path}")
             return None
 
+        # Validate local temp path
         temp_repo_path = validate_temp_local_path(repo_name)
         if not temp_repo_path:
             logger.error(f"Temp path validation failed: {repo_name}")
@@ -56,32 +92,105 @@ class GitService:
         ensure_temp_local_dir()
 
         try:
+            # Mark local path safe for shared/LAN use
+            GitService.add_safe_directory(str(temp_repo_path))
+
+            # ==================================================
+            # IF LOCAL CLONE EXISTS => FETCH / PULL
+            # ==================================================
             if temp_repo_path.exists():
-                # Fetch and pull
-                logger.info(f"Fetching and pulling repo: {repo_name}")
+                logger.info(f"Syncing repository: {repo_name}")
+
                 repo = Repo(str(temp_repo_path))
 
-                # Fetch all remotes
-                for remote in repo.remotes:
-                    remote.fetch()
+                # Save current branch
+                current_branch = None
+                if not repo.head.is_detached:
+                    current_branch = repo.active_branch.name
 
-                # Pull on current branch
-                if repo.head.is_detached:
-                    logger.warning(f"Repository is in detached HEAD state: {repo_name}")
+                # Fetch all remotes and prune deleted refs
+                repo.git.fetch("--all", "--prune")
+
+                # ----------------------------------------------
+                # Sync all branches
+                # ----------------------------------------------
+                if sync_all_branches:
+                    logger.info("Syncing all available branches")
+
+                    local_branch_names = [b.name for b in repo.branches]
+
+                    for ref in repo.remotes.origin.refs:
+                        branch_name = ref.remote_head
+
+                        if branch_name == "HEAD":
+                            continue
+
+                        try:
+                            # Create local branch if missing
+                            if branch_name not in local_branch_names:
+                                repo.git.checkout(
+                                    "-b",
+                                    branch_name,
+                                    ref.name
+                                )
+                                logger.info(
+                                    f"Created local branch: {branch_name}"
+                                )
+                            else:
+                                repo.git.checkout(branch_name)
+
+                            # Pull latest changes
+                            repo.git.pull("origin", branch_name)
+
+                        except Exception as e:
+                            logger.warning(
+                                f"Branch sync failed ({branch_name}): {e}"
+                            )
+
+                    # Return to original branch
+                    if current_branch:
+                        repo.git.checkout(current_branch)
+
+                # ----------------------------------------------
+                # Sync current branch only
+                # ----------------------------------------------
                 else:
-                    active_branch = repo.active_branch
-                    active_branch.set_tracking_branch(f"origin/{active_branch.name}")
-                    try:
-                        active_branch.repo.remotes.origin.pull()
-                    except GitCommandError as e:
-                        logger.warning(f"Pull failed for {repo_name}: {e}")
+                    if repo.head.is_detached:
+                        logger.warning(
+                            f"Detached HEAD state: {repo_name}"
+                        )
+                    else:
+                        try:
+                            repo.git.pull()
+                        except Exception as e:
+                            logger.warning(
+                                f"Pull failed: {e}"
+                            )
 
                 logger.info(f"Repository updated: {repo_name}")
+
+            # ==================================================
+            # IF NOT EXISTS => CLONE
+            # ==================================================
             else:
-                # Clone
-                logger.info(f"Cloning repository: {remote_path} -> {temp_repo_path}")
-                Repo.clone_from(str(validated_remote), str(temp_repo_path))
+                logger.info(
+                    f"Cloning repository: "
+                    f"{validated_remote} -> {temp_repo_path}"
+                )
+
+                Repo.clone_from(
+                    str(validated_remote),
+                    str(temp_repo_path)
+                )
+
+                GitService.add_safe_directory(str(temp_repo_path))
+
                 logger.info(f"Repository cloned: {repo_name}")
+
+                # Optional full sync after clone
+                if sync_all_branches:
+                    repo = Repo(str(temp_repo_path))
+                    repo.git.fetch("--all", "--prune")
 
             return temp_repo_path
 
@@ -258,7 +367,7 @@ class GitService:
             return False
 
     @staticmethod
-    def create_bare_repo(repo_name: str) -> dict:
+    def create_bare_repo(repo_name: str, initialize_with_readme: bool = False) -> dict:
         """Create a new bare repository on LAN share.
 
         1. Sanitize name
@@ -266,11 +375,13 @@ class GitService:
         3. Build full LAN path from settings.allowed_paths[0]
         4. If exists -> error
         5. git init --bare full_path (no shell)
-        6. Save repo metadata
-        7. Return success message
+        6. Optionally clone locally, add README, commit, push
+        7. Save repo metadata
+        8. Return success message
 
         Args:
             repo_name: Repository name to create
+            initialize_with_readme: If True, seed repo with a README.md
 
         Returns:
             Dict with status, name, and remote_path
@@ -330,10 +441,73 @@ class GitService:
             logger.error("git executable not found")
             return {"status": "error", "message": "Git executable not found"}
 
-        # 6. Save repo metadata (use the name without .git as key)
+        # 6. Optionally seed with README
         repo_key = clean_name.removesuffix(".git")
         remote_path_str = str(full_path)
 
+        if initialize_with_readme:
+            try:
+                logger.info(f"Seeding repo with README: {repo_key}")
+                temp_repo_path = validate_temp_local_path(repo_key)
+                ensure_temp_local_dir()
+              
+                print(f"Validated remote: {remote_path_str}, Temp path: {temp_repo_path}")
+                # Clone the bare repo
+                GitService.add_safe_directory(remote_path_str)
+                Repo.clone_from("/" + remote_path_str, str(temp_repo_path))
+
+                # Create README.md
+                readme_content = f"""# {repo_key}
+
+This repository is managed by **Mini GitHub LAN** — a lightweight Git server for LAN-based collaboration.
+
+## What is Mini GitHub LAN?
+
+Mini GitHub LAN allows you to:
+- Host bare Git repositories on a shared LAN drive
+- Clone, push, and pull from any machine on the network
+- Browse repositories through a web UI
+
+## Quick Start
+
+### Clone this repository
+```bash
+git clone {remote_path_str}
+```
+
+### Push an existing project here
+```bash
+git remote add origin {remote_path_str}
+git branch -M main
+git push -u origin main
+```
+
+Happy coding!
+"""
+                readme_path = temp_repo_path / "README.md"
+                readme_path.write_text(readme_content, encoding="utf-8")
+
+                # Stage, commit, push
+                repo = Repo(str(temp_repo_path))
+                repo.git.add(A=True)
+                repo.git.branch("-M", "main")
+
+                from git import Actor
+
+                author = Actor("Mini GitHub LAN", "git@localhost")
+
+                repo.index.commit(
+                    "Initial commit: add README.md",
+                    author=author,
+                    committer=author
+                )
+                repo.remotes.origin.push("main", set_upstream=True)
+                logger.info(f"Repo seeded successfully: {repo_key}")
+            except Exception as e:
+                logger.error(f"Failed to seed repo with README: {e}")
+                # Don't fail the whole operation if seeding fails
+
+        # 7. Save repo metadata (use the name without .git as key)
         try:
             RepositoryStorage.add_repo(repo_key, remote_path_str)
             logger.info(f"Repo metadata saved: {repo_key} -> {remote_path_str}")
@@ -347,7 +521,7 @@ class GitService:
                 "remote_path": remote_path_str,
             }
 
-        # 7. Return success message
+        # 8. Return success message
         return {
             "status": "success",
             "message": f"Bare repository '{repo_key}' created on LAN",
@@ -468,7 +642,7 @@ class GitService:
                 logger.warning(f"Repository in detached HEAD state: {repo_name}")
             else:
                 active_branch = repo.active_branch
-                active_branch.set_tracking_branch(f"origin/{active_branch.name}")
+                active_branch.set_tracking_branch(f"{active_branch.name}")
                 try:
                     active_branch.repo.remotes.origin.pull()
                     logger.info(f"Pulled latest from {active_branch.name}")
