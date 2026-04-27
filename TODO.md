@@ -1,57 +1,25 @@
-# ✅ COMPLETED: Fix Homepage Navigation and Repo Cards
+# TODO: GitHub-style Usability Upgrade
 
-## Changes Made
+## Feature 1: Add Existing Local Repository
+- [x] GitService: `link_local_repo(repo_name, local_path)` method
+- [x] API: `POST /api/repositories/{repo_name}/link-local` endpoint
+- [x] UI: Dialog to input local path (index.html already has dialog)
+- [x] UI: JS functions for Link Local dialog (`openLinkLocalDialog`, `closeLinkLocalDialog`, `linkLocalRepository`)
 
-### 1. Fixed Runtime Error: `url_for` undefined
-**File: `app/routers/web.py`**
-- Switched from raw Jinja2 `Environment` + `template.render()` to FastAPI `Jinja2Templates` + `TemplateResponse`
-- Added `request: Request` parameter to every route handler
-- Fixed `TemplateResponse` argument order to `(request, name, context)` (was incorrectly `(name, context)` causing `tuple as dict key` error)
-- Error responses now return `HTMLResponse` objects with proper status codes
+## Feature 2: Clone Button
+- [x] Ensure clone button works on repo cards (API + JS `cloneRepo` exist)
+- [x] Fix `is_cloned` badge on repo cards (web.py index uses raw storage without `is_cloned`)
 
-### 2. Fixed `templates/index.html`
-- Removed duplicate "Add Repository" modal HTML fragment
-- Added `repo_config is mapping` guard to handle non-dict data gracefully
-- Updated all repo links to use `url_for('repo_page', repo_name=...)`
-- Removed duplicate modal closing tags
+## Feature 3: Push Button
+- [x] Add Push button to repo page (repo.html has it)
+- [x] JS `pushRepo()` function missing for index cards (calls non-existent function)
 
-### 3. Fixed `templates/partials/_header.html`
-- Already correct — uses `url_for` for all navigation links
+## Feature 4: Empty Repo Detection
+- [x] GitService: `is_empty_repo(remote_path)` method
+- [x] Web: Pass `is_empty` flag to repo template
+- [x] Template: Show "Empty Repository" badge
 
-### 4. Fixed `templates/partials/_sidebar.html`  
-- Already correct — uses `request.url.path` and `url_for` (now works since `request` is passed)
-
-### 5. Fixed `templates/partials/_footer.html`
-- Updated hardcoded links to use `url_for('index')` and `url_for('settings_page')`
-
-### 6. Fixed remaining templates for `url_for` consistency
-- **`branches.html`** — all breadcrumbs and back links use `url_for`
-- **`commits.html`** — all breadcrumbs, commit SHA links, and back links use `url_for`
-- **`status.html`** — all breadcrumbs and back links use `url_for`
-- **`diff.html`** — all breadcrumbs and back links use `url_for`
-- **`settings.html`** — back link uses `url_for('index')`
-
-### 7. Updated `static/css/style.css`
-- Added styles for `.app-container`, `.app-header`, `.app-sidebar`, `.content-area`, `.app-footer` to match actual HTML
-- Added `.page-header`, `.repo-header`, `.breadcrumb`, `.repo-nav-tabs`, `.repo-content` styles
-- Added `.status-section`, `.file-list`, `.file-item`, `.status-actions` styles
-- Added `.commits-mini`, `.commit-mini`, `.branches-mini`, `.branch-item` styles
-- Improved responsive styles for mobile
-- Added `.modal-header`, `.modal-body`, `.modal-close` styles
-- Added `.card-header`, `.card-body`, `.card-footer`, `.card-actions` styles
-
-### 8. Updated `static/js/app.js`
-- Added null-safe element checks (`?.`) for all DOM queries
-- Added `encodeURIComponent()` for all API path parameters
-- Added `.catch(() => ({detail: '...'}))` for all JSON parse fallbacks
-- Added `event?.target?.closest('button')` for reliable button targeting
-- Added auto-dismiss fade animation for notifications
-- Added `Escape` key handler to close modals
-- Added `escapeHtml()` to prevent XSS in notification messages
-
-## Test Results
-```
-/: 200 OK
-/settings: 200 OK
-```
-`url_for` now resolves correctly across all templates. No `undefined` errors.
+## Feature 5: GitHub-style Command Boxes
+- [x] Template: Command boxes for empty repos with LAN_PATH
+- [x] CSS: Style command boxes like GitHub (`.command-box`, `.command-header`, `.btn-copy`, etc.)
+- [x] JS: Copy-to-clipboard functionality (`copyToClipboard` function)

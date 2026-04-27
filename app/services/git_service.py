@@ -511,3 +511,79 @@ class GitService:
         except Exception as e:
             logger.error(f"Delete error: {e}")
             return False
+
+    @staticmethod
+    def is_empty_repo(remote_path: str) -> bool:
+        """Check if a bare repository has no commits.
+
+        Args:
+            remote_path: Path to bare repository
+
+        Returns:
+            True if empty (no commits), False otherwise
+        """
+        try:
+            repo = Repo(str(remote_path), odor_detect_unfinished_transaction=False)
+            return not bool(repo.head.is_valid())
+        except Exception:
+            return True
+
+    @staticmethod
+    def link_local_repo(local_path: str, remote_path: str) -> dict:
+        """Link an existing local repository to a LAN bare remote.
+
+        Args:
+            local_path: Path to existing local git repository
+            remote_path: LAN bare repository path to set as origin
+
+        Returns:
+            Dict with status and message
+        """
+        local_git_path = Path(local_path)
+        if not local_git_path.exists():
+            return {"status": "error", "message": f"Local path does not exist: {local_path}"}
+
+        git_dir = local_git_path / ".git"
+        if not git_dir.exists() and not git_dir.is_dir():
+            return {"status": "error", "message": f"Not a git repository: {local_path}"}
+
+        try:
+            repo = Repo(str(local_git_path))
+
+            # Check/add origin remote
+            origin = None
+            try:
+                origin = repo.remote("origin")
+            except ValueError:
+                logger.info(f"Adding origin remote: {remote_path}")
+                origin = repo.create_remote("origin", remote_path)
+
+            # Update origin URL if different
+            if origin.url != remote_path:
+                origin.set_url(remote_path)
+
+            # Push to LAN
+            logger.info(f"Pushing local repo to LAN: {remote_path}")
+            origin.push("main", set_upstream=True)
+            logger.info("Push successful")
+
+            return {"status": "success", "message": "Local repository linked and pushed to LAN"}
+        except Exception as e:
+            logger.error(f"Link local repo error: {e}")
+            return {"status": "error", "message": f"Failed to link repository: {str(e)}"}
+
+    @staticmethod
+    def get_commit_count(repo_path: Path) -> int:
+        """Get total commit count for a repository.
+
+        Args:
+            repo_path: Path to repository
+
+        Returns:
+            Number of commits, 0 if error
+        """
+        try:
+            repo = Repo(str(repo_path))
+            return sum(1 for _ in repo.iter_commits(all=True))
+        except Exception:
+            return 0

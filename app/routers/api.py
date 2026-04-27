@@ -39,6 +39,13 @@ class CreateBareRepoRequest(BaseModel):
     name: str
 
 
+class LinkLocalRepoRequest(BaseModel):
+    """Request to link an existing local repository to LAN."""
+
+    repo_name: str
+    local_path: str
+
+
 @router.get("/repositories")
 async def list_repositories() -> dict:
     """List all registered repositories."""
@@ -85,6 +92,23 @@ async def create_bare_repository(req: CreateBareRepoRequest) -> dict:
         return result
     else:
         return result
+
+
+@router.post("/repositories/link-local")
+async def link_local_repository(req: LinkLocalRepoRequest) -> dict:
+    """Link an existing local repository to a LAN bare remote."""
+    if not req.repo_name or not req.local_path:
+        raise HTTPException(status_code=400, detail="repo_name and local_path are required")
+
+    repo_config = RepositoryStorage.get_repo(req.repo_name)
+    if not repo_config:
+        raise HTTPException(status_code=404, detail="Repository not found")
+
+    result = GitService.link_local_repo(req.local_path, repo_config["remote_path"])
+
+    if result["status"] == "error":
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
 
 
 @router.delete("/repositories/{repo_name}")

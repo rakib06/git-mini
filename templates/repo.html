@@ -5,18 +5,23 @@
 {% block content %}
 <div class="repo-header">
     <div class="breadcrumb">
-        <a href="{{ url_for('index') }}">← Repositories</a>
+        <a href="{{ url_for('index') }}">&#8592; Repositories</a>
     </div>
-    <h1>{{ repo_name }}</h1>
-    <p class="text-muted"><code>{{ repo_config.remote_path }}</code></p>
+    <div class="repo-title-row">
+        <h1>{{ repo_name }}</h1>
+        {% if is_empty %}
+            <span class="badge badge-warning">Empty Repository</span>
+        {% endif %}
+    </div>
+    <p class="text-muted"><code>{{ remote_path }}</code></p>
 </div>
 
 {% if status %}
     <div class="status-banner">
         {% if sync_status == 'success' %}
-            <div class="alert alert-success">✓ Repository synced with latest changes</div>
+            <div class="alert alert-success">&#10003; Repository synced with latest changes</div>
         {% elif sync_status == 'warning' %}
-            <div class="alert alert-warning">⚠ Partial sync - working directory is up to date</div>
+            <div class="alert alert-warning">&#9888; Partial sync - working directory is up to date</div>
         {% endif %}
     </div>
     
@@ -63,65 +68,108 @@
 </div>
 
 <div class="repo-content">
-    {% if recent_commits %}
-    <div class="section">
-        <h2>Recent Commits</h2>
-        <div class="commits-mini">
-            {% for commit in recent_commits[:5] %}
-                <div class="commit-mini">
-                    <div class="commit-sha">
-                        <a href="{{ url_for('diff_page', repo_name=repo_name, commit_sha=commit.full_sha) }}">
-                            <code>{{ commit.sha }}</code>
-                        </a>
-                    </div>
-                    <div class="commit-info">
-                        <div class="commit-msg">{{ commit.message.split('\n')[0] }}</div>
-                        <div class="commit-meta">
-                            <span class="author">{{ commit.author }}</span>
-                            <span class="timestamp">{{ commit.timestamp }}</span>
+    {% if is_empty %}
+    <div class="empty-repo-onboarding">
+        <div class="onboarding-section">
+            <h2>&#128161; Create new repository on command line</h2>
+            <div class="command-box">
+                <div class="command-header">
+                    <span class="command-label">Bash</span>
+                    <button class="btn-copy" onclick="copyToClipboard('cmd-new')">
+                        <svg class="icon-copy" viewBox="0 0 16 16" width="16" height="16"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25Z"></path><path d="M9 7h3.5a.75.75 0 0 1 0 1.5H9v3.5a.75.75 0 0 1-1.5 0V8.5H4a.75.75 0 0 1 0-1.5h3.5V3.5a.75.75 0 0 1 1.5 0Z"></path></svg>
+                        <span>Copy</span>
+                    </button>
+                </div>
+                <pre id="cmd-new"><code>echo "# README" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin {{ remote_path }}
+git push -u origin main</code></pre>
+            </div>
+        </div>
+
+        <div class="onboarding-section">
+            <h2>&#128229; Push an existing repository</h2>
+            <div class="command-box">
+                <div class="command-header">
+                    <span class="command-label">Bash</span>
+                    <button class="btn-copy" onclick="copyToClipboard('cmd-existing')">
+                        <svg class="icon-copy" viewBox="0 0 16 16" width="16" height="16"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25Z"></path><path d="M9 7h3.5a.75.75 0 0 1 0 1.5H9v3.5a.75.75 0 0 1-1.5 0V8.5H4a.75.75 0 0 1 0-1.5h3.5V3.5a.75.75 0 0 1 1.5 0Z"></path></svg>
+                        <span>Copy</span>
+                    </button>
+                </div>
+                <pre id="cmd-existing"><code>git remote add origin {{ remote_path }}
+git branch -M main
+git push -u origin main</code></pre>
+            </div>
+        </div>
+    </div>
+    {% else %}
+        {% if recent_commits %}
+        <div class="section">
+            <h2>Recent Commits ({{ commit_count }})</h2>
+            <div class="commits-mini">
+                {% for commit in recent_commits[:5] %}
+                    <div class="commit-mini">
+                        <div class="commit-sha">
+                            <a href="{{ url_for('diff_page', repo_name=repo_name, commit_sha=commit.full_sha) }}">
+                                <code>{{ commit.sha }}</code>
+                            </a>
+                        </div>
+                        <div class="commit-info">
+                            <div class="commit-msg">{{ commit.message.split('\n')[0] }}</div>
+                            <div class="commit-meta">
+                                <span class="author">{{ commit.author }}</span>
+                                <span class="timestamp">{{ commit.timestamp }}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            {% endfor %}
-            {% if recent_commits|length > 5 %}
-                <div class="more-link">
-                    <a href="{{ url_for('commits_page', repo_name=repo_name) }}">View all commits →</a>
-                </div>
-            {% endif %}
+                {% endfor %}
+                {% if recent_commits|length > 5 %}
+                    <div class="more-link">
+                        <a href="{{ url_for('commits_page', repo_name=repo_name) }}">View all commits &#8594;</a>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
-    {% endif %}
-    
-    {% if branches %}
-    <div class="section">
-        <h2>Branches</h2>
-        <div class="branches-mini">
-            {% for branch in branches[:10] %}
-                <div class="branch-item">
-                    {% if branch.is_current %}
-                        <span class="badge badge-primary">{{ branch.name }}</span>
-                    {% else %}
-                        <span class="branch-name">{{ branch.name }}</span>
-                    {% endif %}
-                    <code class="sha">{{ branch.commit }}</code>
-                </div>
-            {% endfor %}
-            {% if branches|length > 10 %}
-                <div class="more-link">
-                    <a href="{{ url_for('branches_page', repo_name=repo_name) }}">View all branches →</a>
-                </div>
-            {% endif %}
+        {% endif %}
+        
+        {% if branches %}
+        <div class="section">
+            <h2>Branches</h2>
+            <div class="branches-mini">
+                {% for branch in branches[:10] %}
+                    <div class="branch-item">
+                        {% if branch.is_current %}
+                            <span class="badge badge-primary">{{ branch.name }}</span>
+                        {% else %}
+                            <span class="branch-name">{{ branch.name }}</span>
+                        {% endif %}
+                        <code class="sha">{{ branch.commit }}</code>
+                    </div>
+                {% endfor %}
+                {% if branches|length > 10 %}
+                    <div class="more-link">
+                        <a href="{{ url_for('branches_page', repo_name=repo_name) }}">View all branches &#8594;</a>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
+        {% endif %}
     {% endif %}
 </div>
 
 <div class="repo-actions-footer">
     <button class="btn btn-secondary" onclick="cloneRepo('{{ repo_name }}')">
-        <span class="icon">↓</span> Fetch Latest
+        <span class="icon">&#8595;</span> Fetch Latest
+    </button>
+    <button class="btn btn-secondary" onclick="pushRepo('{{ repo_name }}')">
+        <span class="icon">&#8593;</span> Push to LAN
     </button>
     <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="btn btn-secondary">
-        <span class="icon">⚙</span> Manage
+        <span class="icon">&#9881;</span> Manage
     </a>
 </div>
 {% endblock %}

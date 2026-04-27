@@ -279,6 +279,85 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
+// ─── Link Local Repository ───────────────────────────────────────
+
+function openLinkLocalDialog() {
+    const dialog = document.getElementById('linkLocalDialog');
+    if (dialog) dialog.style.display = 'block';
+}
+
+function closeLinkLocalDialog() {
+    const dialog = document.getElementById('linkLocalDialog');
+    if (dialog) dialog.style.display = 'none';
+    const nameInput = document.getElementById('linkRepoName');
+    const pathInput = document.getElementById('localPath');
+    if (nameInput) nameInput.value = '';
+    if (pathInput) pathInput.value = '';
+}
+
+async function linkLocalRepository(event) {
+    event.preventDefault();
+    const repoName = document.getElementById('linkRepoName')?.value?.trim();
+    const localPath = document.getElementById('localPath')?.value?.trim();
+
+    if (!repoName || !localPath) {
+        showNotification('Repository name and local path are required', 'warning');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/repositories/link-local`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repo_name: repoName, local_path: localPath })
+        });
+
+        if (response.ok) {
+            showNotification('Local repository linked and pushed successfully', 'success');
+            closeLinkLocalDialog();
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+            showNotification(`Error: ${error.detail || 'Failed to link repository'}`, 'danger');
+        }
+    } catch (error) {
+        showNotification(`Error: ${error.message}`, 'danger');
+    }
+}
+
+// ─── Push Repo (wrapper for index cards) ───────────────────────────
+
+async function pushRepo(repoName) {
+    return pushChanges(repoName);
+}
+
+// ─── Copy to Clipboard ─────────────────────────────────────────────
+
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    const text = element.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        showNotification('Copied to clipboard', 'success');
+    }).catch(() => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showNotification('Copied to clipboard', 'success');
+        } catch {
+            showNotification('Failed to copy to clipboard', 'danger');
+        }
+        document.body.removeChild(textarea);
+    });
+}
+
 // ─── Utilities ─────────────────────────────────────────────────────
 
 function formatDate(isoString) {

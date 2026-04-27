@@ -5,27 +5,31 @@
 {% block content %}
 <div class="page-header">
     <div class="header-content">
-        <h1>📦 Repositories</h1>
+        <h1>&#128230; Repositories</h1>
         <p class="text-muted">Manage your local Git repositories from LAN shares</p>
     </div>
-    <button class="btn btn-primary" onclick="openAddRepoDialog()">
-        <span class="icon">+</span> Add Repository
-    </button>
+    <div class="header-actions">
+        <button class="btn btn-secondary" onclick="openLinkLocalDialog()">
+            <span class="icon">&#128279;</span> Link Local Repo
+        </button>
+        <button class="btn btn-primary" onclick="openAddRepoDialog()">
+            <span class="icon">+</span> Add Repository
+        </button>
+    </div>
 </div>
 
 {% if repositories %}
     <div class="repos-grid">
         {% for repo_name, repo_config in repositories.items() %}
-            {% if repo_config is mapping and repo_config.get('remote_path') %}
             <div class="repo-card">
                 <div class="card-header">
                     <h3 class="card-title">
                         <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="repo-link">{{ repo_name }}</a>
                     </h3>
                     {% if repo_config.get('is_cloned') %}
-                        <span class="badge badge-success">✓ Cloned</span>
+                        <span class="badge badge-success">&#10003; Cloned</span>
                     {% else %}
-                        <span class="badge badge-secondary">○ Not Cloned</span>
+                        <span class="badge badge-secondary">&#9675; Not Cloned</span>
                     {% endif %}
                 </div>
                 
@@ -42,17 +46,20 @@
                     <div class="card-actions">
                         <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="btn btn-sm btn-primary">Open</a>
                         <button class="btn btn-sm btn-secondary" onclick="cloneRepo('{{ repo_name }}')">
-                            <span class="icon">↓</span> Sync
+                            <span class="icon">&#8595;</span> Clone
+                        </button>
+                        <button class="btn btn-sm btn-success" onclick="pushRepo('{{ repo_name }}')">
+                            <span class="icon">&#8593;</span> Push
                         </button>
                         <button class="btn btn-sm btn-danger" onclick="deleteRepo('{{ repo_name }}')">Delete</button>
                     </div>
+                </div>
             </div>
-            {% endif %}
         {% endfor %}
     </div>
 {% else %}
     <div class="empty-state">
-        <div class="empty-icon">📭</div>
+        <div class="empty-icon">&#128236;</div>
         <h2>No repositories yet</h2>
         <p>Start by adding your first repository from a LAN share</p>
         <button class="btn btn-primary btn-lg" onclick="openAddRepoDialog()">
@@ -93,4 +100,40 @@
             </div>
         </form>
     </div>
+</div>
+
+<!-- Link Local Repository Dialog -->
+<div id="linkLocalDialog" class="modal" onclick="closeLinkLocalDialog()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Link Local Repository</h2>
+            <button class="modal-close" onclick="closeLinkLocalDialog()">&times;</button>
+        </div>
+        
+        <form onsubmit="linkLocalRepository(event)" class="modal-body">
+            <div class="form-group">
+                <label for="linkRepoName">Repository Name</label>
+                <input type="text" id="linkRepoName" placeholder="existing-project" required>
+                <small class="text-muted">Must match a registered LAN repository name</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="localPath">Local Repository Path</label>
+                <input 
+                    type="text" 
+                    id="localPath" 
+                    placeholder="C:\Users\me\projects\myrepo" 
+                    required
+                >
+                <small class="text-muted">Full path to existing local git repository</small>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Link &amp; Push</button>
+                <button type="button" class="btn btn-secondary" onclick="closeLinkLocalDialog()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
+

@@ -20,10 +20,23 @@ templates = Jinja2Templates(directory=str(templates_path))
 async def index(request: Request) -> HTMLResponse:
     """Home page - list repositories."""
     repos = RepositoryStorage.list_repos()
+    from app.utils.path_security import validate_temp_local_path
+
+    enriched_repos = {}
+    for name, config in repos.items():
+        temp_path = validate_temp_local_path(name)
+        is_cloned = temp_path and temp_path.exists()
+        if isinstance(config, dict):
+            enriched_repos[name] = dict(config)
+        else:
+            # Handle malformed/corrupted entries gracefully
+            enriched_repos[name] = {"remote_path": str(config) if config else "", "last_opened": None}
+        enriched_repos[name]["is_cloned"] = is_cloned
+
     return templates.TemplateResponse(
         request,
         "index.html",
-        {"repositories": repos},
+        {"repositories": enriched_repos},
     )
 
 
@@ -49,6 +62,8 @@ async def repo_page(request: Request, repo_name: str) -> HTMLResponse:
         status = GitService.get_status(temp_repo_path)
         branches = GitService.get_branches(temp_repo_path)
         commits = GitService.get_commits(temp_repo_path, max_count=10)
+        is_empty = GitService.is_empty_repo(repo_config["remote_path"])
+        commit_count = GitService.get_commit_count(temp_repo_path)
 
         return templates.TemplateResponse(
             request,
@@ -60,6 +75,9 @@ async def repo_page(request: Request, repo_name: str) -> HTMLResponse:
                 "branches": branches,
                 "recent_commits": commits,
                 "sync_status": "success" if sync_result else "warning",
+                "is_empty": is_empty,
+                "commit_count": commit_count,
+                "remote_path": repo_config["remote_path"],
             },
         )
     except Exception as e:
