@@ -3,15 +3,31 @@
 {% block title %}Diff - {{ commit_sha }} - Mini GitHub LAN{% endblock %}
 
 {% block content %}
-<div class="diff-page">
-    <h1>Commit: {{ commit_sha }}</h1>
-    
-    <div class="diff-content">
-        <pre><code>{{ diff }}</code></pre>
+<div class="repo-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">Repositories</a> /
+        <a href="{{ url_for('repo_page', repo_name=repo_name) }}">{{ repo_name }}</a> /
+        <a href="{{ url_for('commits_page', repo_name=repo_name) }}">Commits</a>
     </div>
-    
-    <div class="back-link">
-        <a href="/repo/{{ repo_name }}/commits">&larr; Back to Commits</a>
-    </div>
+    <h1>Commit Diff</h1>
+    <p class="text-muted">
+        <code>{{ commit_sha }}</code>
+    </p>
+</div>
+
+<div class="diff-container">
+    {% if diff %}
+        <div class="diff-content">
+            <pre><code class="diff-code">{{ diff }}</code></pre>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No changes in this commit</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="back-link">
+    <a href="{{ url_for('commits_page', repo_name=repo_name) }}">← Back to Commits</a>
 </div>
 {% endblock %}

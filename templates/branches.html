@@ -3,31 +3,45 @@
 {% block title %}Branches - {{ repo_name }} - Mini GitHub LAN{% endblock %}
 
 {% block content %}
-<div class="branches-page">
-    <h1>Branches - {{ repo_name }}</h1>
-    
-    {% if branches %}
-        <table class="branches-table">
+<div class="repo-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">Repositories</a> /
+        <a href="{{ url_for('repo_page', repo_name=repo_name) }}">{{ repo_name }}</a>
+    </div>
+    <h1>Branches</h1>
+</div>
+
+{% if branches %}
+    <div class="table-container">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Commit</th>
-                    <th>Status</th>
+                    <th class="col-name">Branch Name</th>
+                    <th class="col-commit">Commit</th>
+                    <th class="col-status">Status</th>
                 </tr>
             </thead>
             <tbody>
                 {% for branch in branches %}
                     <tr>
-                        <td>
-                            <span class="branch-name">{{ branch.name }}</span>
-                            {% if branch.is_current %}
-                                <span class="badge badge-primary">current</span>
-                            {% endif %}
+                        <td class="col-name">
+                            <div class="branch-cell">
+                                {% if branch.is_current %}
+                                    <span class="icon current">◉</span>
+                                    <strong>{{ branch.name }}</strong>
+                                    <span class="badge badge-primary">current</span>
+                                {% else %}
+                                    <span class="icon">○</span>
+                                    <span>{{ branch.name }}</span>
+                                {% endif %}
+                            </div>
                         </td>
-                        <td><code>{{ branch.commit }}</code></td>
-                        <td>
+                        <td class="col-commit">
+                            <code class="sha">{{ branch.commit }}</code>
+                        </td>
+                        <td class="col-status">
                             {% if branch.is_current %}
-                                <span class="badge badge-info">Active</span>
+                                <span class="badge badge-success">Active</span>
                             {% else %}
                                 <span class="badge badge-secondary">Inactive</span>
                             {% endif %}
@@ -36,12 +50,14 @@
                 {% endfor %}
             </tbody>
         </table>
-    {% else %}
-        <p>No branches found.</p>
-    {% endif %}
-    
-    <div class="back-link">
-        <a href="/repo/{{ repo_name }}">&larr; Back to {{ repo_name }}</a>
     </div>
+{% else %}
+    <div class="empty-state">
+        <p>No branches found in this repository.</p>
+    </div>
+{% endif %}
+
+<div class="back-link">
+    <a href="{{ url_for('repo_page', repo_name=repo_name) }}">← Back to {{ repo_name }}</a>
 </div>
 {% endblock %}

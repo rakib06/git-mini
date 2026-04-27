@@ -1,11 +1,22 @@
-<header class="header">
-    <div class="header-content">
-        <div class="logo">
-            <a href="/">📦 Mini GitHub LAN</a>
+<header class="app-header">
+    <div class="header-wrapper">
+        <div class="header-left">
+            <a href="{{ url_for('index') }}" class="logo">
+                <span class="logo-icon">📦</span>
+                <span class="logo-text">Mini GitHub LAN</span>
+            </a>
         </div>
+        
         <nav class="header-nav">
-            <a href="/">Repositories</a>
-            <a href="/settings">Settings</a>
+            <a href="{{ url_for('index') }}" class="nav-link">
+                <span class="icon">📚</span>
+                Repositories
+            </a>
+            <a href="{{ url_for('settings_page') }}" class="nav-link">
+                <span class="icon">⚙️</span>
+                Settings
+            </a>
         </nav>
     </div>
 </header>
+

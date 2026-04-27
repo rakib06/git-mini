@@ -1,9 +1,9 @@
 {% if alerts %}
-    <div class="alerts">
+    <div class="alerts-container">
         {% for alert in alerts %}
-            <div class="alert alert-{{ alert.type }}">
-                <span class="alert-message">{{ alert.message }}</span>
-                <button class="alert-close" onclick="this.parentElement.style.display='none';">&times;</button>
+            <div class="alert alert-{{ alert.type }}" role="alert">
+                <span class="alert-content">{{ alert.message }}</span>
+                <button class="alert-close" onclick="this.parentElement.remove()" aria-label="Close alert">&times;</button>
             </div>
         {% endfor %}
     </div>

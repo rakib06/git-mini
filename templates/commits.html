@@ -3,31 +3,62 @@
 {% block title %}Commits - {{ repo_name }} - Mini GitHub LAN{% endblock %}
 
 {% block content %}
-<div class="commits-page">
-    <h1>Commits - {{ repo_name }}</h1>
-    
-    {% if commits %}
-        <div class="commits-list">
-            {% for commit in commits %}
-                <div class="commit-item">
-                    <div class="commit-header">
-                        <a href="/repo/{{ repo_name }}/diff/{{ commit.full_sha }}" class="commit-sha">{{ commit.sha }}</a>
-                        <span class="commit-message">{{ commit.message.split('\n')[0] }}</span>
-                    </div>
-                    <div class="commit-meta">
-                        <span class="author">{{ commit.author }}</span>
-                        <span class="email">&lt;{{ commit.email }}&gt;</span>
-                        <span class="timestamp">{{ commit.timestamp }}</span>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p>No commits found.</p>
-    {% endif %}
-    
-    <div class="back-link">
-        <a href="/repo/{{ repo_name }}">&larr; Back to {{ repo_name }}</a>
+<div class="repo-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">Repositories</a> /
+        <a href="{{ url_for('repo_page', repo_name=repo_name) }}">{{ repo_name }}</a>
     </div>
+    <h1>Commits</h1>
+</div>
+
+{% if commits %}
+    <div class="commits-list">
+        {% for commit in commits %}
+            <div class="commit-card">
+                <div class="commit-header">
+                    <div class="commit-left">
+                        <a href="{{ url_for('diff_page', repo_name=repo_name, commit_sha=commit.full_sha) }}" class="commit-sha">
+                            <code>{{ commit.sha }}</code>
+                        </a>
+                        <div class="commit-message">
+                            {{ commit.message.split('\n')[0] }}
+                        </div>
+                </div>
+                
+                <div class="commit-details">
+                    <div class="detail-item">
+                        <span class="label">Author:</span>
+                        <span class="author-name">{{ commit.author }}</span>
+                        <span class="text-muted"><{{ commit.email }}></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Date:</span>
+                        <time class="timestamp">{{ commit.timestamp }}</time>
+                    </div>
+                    {% if commit.parent_shas %}
+                    <div class="detail-item">
+                        <span class="label">Parents:</span>
+                        {% for parent_sha in commit.parent_shas %}
+                            <code class="parent-sha">{{ parent_sha }}</code>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="commit-actions">
+                    <a href="{{ url_for('diff_page', repo_name=repo_name, commit_sha=commit.full_sha) }}" class="btn btn-sm">
+                        View Diff
+                    </a>
+                </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <p>No commits found in this repository.</p>
+    </div>
+{% endif %}
+
+<div class="back-link">
+    <a href="{{ url_for('repo_page', repo_name=repo_name) }}">← Back to {{ repo_name }}</a>
 </div>
 {% endblock %}

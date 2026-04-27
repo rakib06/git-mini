@@ -1,10 +1,15 @@
-<aside class="sidebar">
+<aside class="app-sidebar">
     <nav class="sidebar-nav">
-        <a href="/" class="sidebar-link">
-            <span class="icon">📚</span> Repositories
-        </a>
-        <a href="/settings" class="sidebar-link">
-            <span class="icon">⚙️</span> Settings
-        </a>
+        <div class="nav-section">
+            <a href="{{ url_for('index') }}" class="nav-item{% if request.url.path == '/' %} active{% endif %}">
+                <span class="icon">📚</span>
+                <span class="label">Repositories</span>
+            </a>
+            <a href="{{ url_for('settings_page') }}" class="nav-item{% if request.url.path == '/settings' %} active{% endif %}">
+                <span class="icon">⚙️</span>
+                <span class="label">Settings</span>
+            </a>
+        </div>
     </nav>
 </aside>
+

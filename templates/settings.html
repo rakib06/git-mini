@@ -3,36 +3,84 @@
 {% block title %}Settings - Mini GitHub LAN{% endblock %}
 
 {% block content %}
-<div class="settings-page">
-    <h1>Settings</h1>
+<div class="page-header">
+    <div class="header-content">
+        <h1>⚙️ Settings</h1>
+        <p class="text-muted">Application configuration and status</p>
+    </div>
+</div>
+
+<div class="settings-container">
+    <div class="settings-section">
+        <h2>Server Configuration</h2>
+        <div class="settings-grid">
+            <div class="setting-item">
+                <div class="setting-label">Host</div>
+                <div class="setting-value">
+                    <code>{{ host }}</code>
+                    <span class="badge badge-success">Localhost</span>
+                </div>
+                <small class="text-muted">Binding address - secure localhost-only access</small>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">Port</div>
+                <div class="setting-value">
+                    <code>{{ port }}</code>
+                </div>
+                <small class="text-muted">Server port number</small>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-label">Temp Local Directory</div>
+                <div class="setting-value">
+                    <code>{{ temp_local_dir }}</code>
+                </div>
+                <small class="text-muted">Where cloned repositories are stored</small>
+            </div>
+        </div>
+    </div>
     
     <div class="settings-section">
-        <h3>Server Configuration</h3>
-        <div class="setting-item">
-            <label>Host:</label>
-            <code>{{ host }}</code>
-        </div>
-        <div class="setting-item">
-            <label>Port:</label>
-            <code>{{ port }}</code>
-        </div>
-        <div class="setting-item">
-            <label>Temp Local Directory:</label>
-            <code>{{ temp_local_dir }}</code>
+        <h2>Allowed LAN Paths</h2>
+        <p class="text-muted">Repositories can only be cloned from these paths</p>
+        <div class="paths-list">
+            {% if allowed_paths %}
+                {% for path in allowed_paths %}
+                    <div class="path-item">
+                        <span class="icon">📂</span>
+                        <code>{{ path }}</code>
+                        <span class="badge badge-info">UNC Path</span>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <p>No allowed paths configured</p>
+                </div>
+            {% endif %}
         </div>
     </div>
     
-    <div class="settings-section">
-        <h3>Allowed Paths</h3>
-        <ul class="path-list">
-            {% for path in allowed_paths %}
-                <li><code>{{ path }}</code></li>
-            {% endfor %}
-        </ul>
+    <div class="settings-section info-section">
+        <h2>About</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <strong>Application</strong>
+                <p>Mini GitHub LAN v1.0.0</p>
+            </div>
+            <div class="info-item">
+                <strong>Purpose</strong>
+                <p>Local Git repository management for LAN shares</p>
+            </div>
+            <div class="info-item">
+                <strong>Technology</strong>
+                <p>FastAPI • GitPython • Jinja2</p>
+            </div>
+        </div>
     </div>
-    
-    <div class="back-link">
-        <a href="/">&larr; Back to Repositories</a>
-    </div>
+</div>
+
+<div class="back-link">
+<a href="{{ url_for('index') }}">← Back to Repositories</a>
 </div>
 {% endblock %}

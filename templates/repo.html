@@ -3,33 +3,126 @@
 {% block title %}{{ repo_name }} - Mini GitHub LAN{% endblock %}
 
 {% block content %}
-<div class="repo-page">
+<div class="repo-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">← Repositories</a>
+    </div>
     <h1>{{ repo_name }}</h1>
-    <p class="repo-path">{{ repo_config.remote_path }}</p>
+    <p class="text-muted"><code>{{ repo_config.remote_path }}</code></p>
+</div>
+
+{% if status %}
+    <div class="status-banner">
+        {% if sync_status == 'success' %}
+            <div class="alert alert-success">✓ Repository synced with latest changes</div>
+        {% elif sync_status == 'warning' %}
+            <div class="alert alert-warning">⚠ Partial sync - working directory is up to date</div>
+        {% endif %}
+    </div>
     
-    {% if status %}
-        <div class="status-info">
-            <div class="status-item">
-                <span class="label">Branch:</span>
-                <span class="value">{{ status.branch }}</span>
-            </div>
-            <div class="status-item">
-                <span class="label">Status:</span>
-                <span class="value">{% if status.is_dirty %}<span class="badge badge-warning">Dirty</span>{% else %}<span class="badge badge-success">Clean</span>{% endif %}</span>
+    <div class="status-grid">
+        <div class="status-card">
+            <div class="status-label">Branch</div>
+            <div class="status-value">
+                <span class="badge badge-primary">{{ status.branch }}</span>
             </div>
         </div>
+        
+        <div class="status-card">
+            <div class="status-label">Status</div>
+            <div class="status-value">
+                {% if status.is_dirty %}
+                    <span class="badge badge-warning">Modified</span>
+                {% else %}
+                    <span class="badge badge-success">Clean</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if status.staged %}
+        <div class="status-card">
+            <div class="status-label">Staged</div>
+            <div class="status-value">{{ status.staged|length }} file(s)</div>
+        </div>
+        {% endif %}
+        
+        {% if status.unstaged %}
+        <div class="status-card">
+            <div class="status-label">Unstaged</div>
+            <div class="status-value">{{ status.unstaged|length }} file(s)</div>
+        </div>
+        {% endif %}
+    </div>
+{% endif %}
+
+<div class="repo-nav-tabs">
+    <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="tab-link active">Overview</a>
+    <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="tab-link">Branches ({{ branches|length }})</a>
+    <a href="{{ url_for('commits_page', repo_name=repo_name) }}" class="tab-link">Commits</a>
+    <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="tab-link">Status</a>
+</div>
+
+<div class="repo-content">
+    {% if recent_commits %}
+    <div class="section">
+        <h2>Recent Commits</h2>
+        <div class="commits-mini">
+            {% for commit in recent_commits[:5] %}
+                <div class="commit-mini">
+                    <div class="commit-sha">
+                        <a href="{{ url_for('diff_page', repo_name=repo_name, commit_sha=commit.full_sha) }}">
+                            <code>{{ commit.sha }}</code>
+                        </a>
+                    </div>
+                    <div class="commit-info">
+                        <div class="commit-msg">{{ commit.message.split('\n')[0] }}</div>
+                        <div class="commit-meta">
+                            <span class="author">{{ commit.author }}</span>
+                            <span class="timestamp">{{ commit.timestamp }}</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            {% if recent_commits|length > 5 %}
+                <div class="more-link">
+                    <a href="{{ url_for('commits_page', repo_name=repo_name) }}">View all commits →</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
     {% endif %}
     
-    <div class="nav-tabs">
-        <a href="/repo/{{ repo_name }}" class="tab-link active">Overview</a>
-        <a href="/repo/{{ repo_name }}/branches" class="tab-link">Branches</a>
-        <a href="/repo/{{ repo_name }}/commits" class="tab-link">Commits</a>
-        <a href="/repo/{{ repo_name }}/status" class="tab-link">Status</a>
+    {% if branches %}
+    <div class="section">
+        <h2>Branches</h2>
+        <div class="branches-mini">
+            {% for branch in branches[:10] %}
+                <div class="branch-item">
+                    {% if branch.is_current %}
+                        <span class="badge badge-primary">{{ branch.name }}</span>
+                    {% else %}
+                        <span class="branch-name">{{ branch.name }}</span>
+                    {% endif %}
+                    <code class="sha">{{ branch.commit }}</code>
+                </div>
+            {% endfor %}
+            {% if branches|length > 10 %}
+                <div class="more-link">
+                    <a href="{{ url_for('branches_page', repo_name=repo_name) }}">View all branches →</a>
+                </div>
+            {% endif %}
+        </div>
     </div>
-    
-    <div class="repo-actions">
-        <button class="btn btn-primary" onclick="cloneRepo('{{ repo_name }}')">Fetch/Pull</button>
-        <a href="/" class="btn btn-secondary">Back to Repos</a>
-    </div>
+    {% endif %}
+</div>
+
+<div class="repo-actions-footer">
+    <button class="btn btn-secondary" onclick="cloneRepo('{{ repo_name }}')">
+        <span class="icon">↓</span> Fetch Latest
+    </button>
+    <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="btn btn-secondary">
+        <span class="icon">⚙</span> Manage
+    </a>
 </div>
 {% endblock %}
+

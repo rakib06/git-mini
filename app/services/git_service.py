@@ -322,9 +322,7 @@ class GitService:
             logger.error(f"Repository not found: {repo_name}")
             return None
 
-        return GitService.clone_or_fetch(
-            repo_config["remote_path"], repo_name
-        )
+        return GitService.clone_or_fetch(repo_config["remote_path"], repo_name)
 
     @staticmethod
     def clone_from_lan(repo_name: str) -> Optional[Path]:
