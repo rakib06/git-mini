@@ -112,6 +112,46 @@ def sanitize_repo_name(name: str) -> Optional[str]:
     return name
 
 
+def validate_repo_file_path(repo_name: str, file_path: str) -> Optional[Path]:
+    """
+    Validate that a file path is strictly inside temp_local/{repo_name}.
+    Prevents directory traversal and absolute path attacks.
+    """
+    if not repo_name:
+        return None
+
+    # Validate repo_name itself
+    if "/" in repo_name or "\\" in repo_name or repo_name.startswith("."):
+        return None
+
+    # Reject absolute paths for file_path
+    if Path(file_path).is_absolute():
+        logger.warning(f"Absolute file path rejected: {file_path}")
+        return None
+
+    # Reject path traversal patterns
+    norm_path = Path(file_path).as_posix()
+    if ".." in norm_path.split("/"):
+        logger.warning(f"Path traversal rejected: {file_path}")
+        return None
+
+    # Build target path
+    temp_repo_path = validate_temp_local_path(repo_name)
+    if not temp_repo_path:
+        return None
+
+    target = (temp_repo_path / file_path).resolve()
+
+    # Ensure target is within temp_repo_path
+    try:
+        target.relative_to(temp_repo_path.resolve())
+    except ValueError:
+        logger.warning(f"Path escape rejected: {target}")
+        return None
+
+    return target
+
+
 def validate_branch_name(name: str) -> bool:
     """
     Validate branch name for safety.

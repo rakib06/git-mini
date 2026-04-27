@@ -62,6 +62,7 @@
 
 <div class="repo-nav-tabs">
     <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="tab-link active">Overview</a>
+    <a href="{{ url_for('files_page', repo_name=repo_name) }}" class="tab-link">Files</a>
     <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="tab-link">Branches ({{ branches|length }})</a>
     <a href="{{ url_for('commits_page', repo_name=repo_name) }}" class="tab-link">Commits</a>
     <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="tab-link">Status</a>

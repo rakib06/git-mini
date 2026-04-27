@@ -1,25 +1,37 @@
-# TODO: GitHub-style Usability Upgrade
+# File Browser Feature Implementation
 
-## Feature 1: Add Existing Local Repository
-- [x] GitService: `link_local_repo(repo_name, local_path)` method
-- [x] API: `POST /api/repositories/{repo_name}/link-local` endpoint
-- [x] UI: Dialog to input local path (index.html already has dialog)
-- [x] UI: JS functions for Link Local dialog (`openLinkLocalDialog`, `closeLinkLocalDialog`, `linkLocalRepository`)
+## Plan
+- [x] Analyze codebase and confirm plan with user
+- [x] Update `app/utils/path_security.py` - add `validate_repo_file_path`
+- [x] Update `app/services/git_service.py` - add `list_directory`, `is_text_file`, `get_safe_mime_type`
+- [x] Update `app/routers/web.py` - add `/files`, `/download`, `/view` routes
+- [x] Create `templates/files.html` - GitHub-style file explorer
+- [x] Create `templates/view.html` - text/code preview
+- [x] Update `templates/repo.html` - add Files tab
+- [x] Update `static/css/style.css` - file browser and preview styles
+- [x] Update `static/js/app.js` - format bytes and dates
+- [x] Verify implementation completeness
 
-## Feature 2: Clone Button
-- [x] Ensure clone button works on repo cards (API + JS `cloneRepo` exist)
-- [x] Fix `is_cloned` badge on repo cards (web.py index uses raw storage without `is_cloned`)
+## Summary of Changes
 
-## Feature 3: Push Button
-- [x] Add Push button to repo page (repo.html has it)
-- [x] JS `pushRepo()` function missing for index cards (calls non-existent function)
+### Backend
+- `app/utils/path_security.py`: Added `validate_repo_file_path()` for secure file path validation inside `temp_local/{repo_name}`. Blocks `..`, absolute paths, and path escapes.
+- `app/services/git_service.py`: Added `list_directory()`, `is_text_file()`, `get_safe_mime_type()` helpers.
+- `app/routers/web.py`: Added three new routes:
+  - `GET /repo/{name}/files?path=...` — File browser with breadcrumbs, folder navigation, back button
+  - `GET /repo/{name}/download?path=...` — Safe file streaming download
+  - `GET /repo/{name}/view?path=...` — Text/code preview with binary rejection
 
-## Feature 4: Empty Repo Detection
-- [x] GitService: `is_empty_repo(remote_path)` method
-- [x] Web: Pass `is_empty` flag to repo template
-- [x] Template: Show "Empty Repository" badge
+### Frontend
+- `templates/files.html`: GitHub-style file explorer table with folders first, file sizes, modified times, icons, and actions (Open/View/Download).
+- `templates/view.html`: Clean text preview page with breadcrumbs, file metadata, and download/back actions.
+- `templates/repo.html`: Added "Files" tab to the repo navigation.
+- `static/css/style.css`: Added `.file-browser`, `.file-table`, `.file-view-header`, `.file-view-container` styles.
+- `static/js/app.js`: Added `formatBytes()` and `enhanceFileBrowser()` for human-readable sizes and dates.
 
-## Feature 5: GitHub-style Command Boxes
-- [x] Template: Command boxes for empty repos with LAN_PATH
-- [x] CSS: Style command boxes like GitHub (`.command-box`, `.command-header`, `.btn-copy`, etc.)
-- [x] JS: Copy-to-clipboard functionality (`copyToClipboard` function)
+### Security
+- Path traversal blocked (`../`, absolute paths)
+- Only paths inside `temp_local/{repo_name}` are allowed
+- Binary files rejected from text preview (415 response)
+- Safe MIME type handling for downloads
+

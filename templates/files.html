@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Files - {{ repo_name }} - Mini GitHub LAN{% endblock %}
+
+{% block content %}
+<div class="repo-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">Repositories</a> /
+        <a href="{{ url_for('repo_page', repo_name=repo_name) }}">{{ repo_name }}</a>
+        {% if path %}
+            /
+            {% for part in breadcrumb_parts %}
+                {% if loop.last %}
+                    <span>{{ part.name }}</span>
+                {% else %}
+                    / <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=part.path) }}">{{ part.name }}</a>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            / <span>Files</span>
+        {% endif %}
+    </div>
+    <h1>Files</h1>
+</div>
+
+<div class="repo-nav-tabs">
+    <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="tab-link">Overview</a>
+    <a href="{{ url_for('files_page', repo_name=repo_name) }}" class="tab-link active">Files</a>
+    <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="tab-link">Branches</a>
+    <a href="{{ url_for('commits_page', repo_name=repo_name) }}" class="tab-link">Commits</a>
+    <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="tab-link">Status</a>
+</div>
+
+{% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+{% else %}
+    <div class="file-browser">
+        <div class="file-browser-header">
+            {% if path %}
+                <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=parent_path) }}" class="btn btn-sm btn-secondary">
+                    ← Back
+                </a>
+            {% endif %}
+        </div>
+        <div class="table-container">
+            <table class="data-table file-table">
+                <thead>
+                    <tr>
+                        <th class="col-name">Name</th>
+                        <th class="col-size">Size</th>
+                        <th class="col-modified">Modified</th>
+                        <th class="col-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if not entries %}
+                        <tr>
+                            <td colspan="4" class="empty-cell">
+                                <div class="empty-state small">
+                                    <p>This directory is empty.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% for entry in entries %}
+                        <tr>
+                            <td class="col-name">
+                                {% if entry.is_dir %}
+                                    <span class="file-icon folder">📁</span>
+                                    <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="file-name folder-name">{{ entry.name }}</a>
+                                {% else %}
+                                    <span class="file-icon file">📄</span>
+                                    <span class="file-name">{{ entry.name }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="col-size">
+                                {% if entry.is_dir %}
+                                    —
+                                {% else %}
+                                    {{ entry.size | default(0) }} bytes
+                                {% endif %}
+                            </td>
+                            <td class="col-modified">
+                                <time class="file-modified" datetime="{{ entry.modified }}">{{ entry.modified }}</time>
+                            </td>
+                            <td class="col-actions">
+                                {% if entry.is_dir %}
+                                    <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="btn btn-sm">Open</a>
+                                {% else %}
+                                    <a href="{{ url_for('view_file_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="btn btn-sm">View</a>
+                                    <a href="{{ url_for('download_file', repo_name=repo_name).include_query_params(path=entry.path) }}" class="btn btn-sm btn-secondary">Download</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+<div class="back-link">
+    <a href="{{ url_for('repo_page', repo_name=repo_name) }}">← Back to {{ repo_name }}</a>
+</div>
+{% endblock %}
+

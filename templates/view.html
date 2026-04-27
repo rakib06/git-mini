@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}{{ filename }} - {{ repo_name }} - Mini GitHub LAN{% endblock %}
+
+{% block content %}
+<div class="repo-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">Repositories</a> /
+        <a href="{{ url_for('repo_page', repo_name=repo_name) }}">{{ repo_name }}</a>
+        {% if path %}
+            /
+            {% for part in breadcrumb_parts %}
+                {% if loop.last %}
+                    <span>{{ part.name }}</span>
+                {% else %}
+                    / <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=part.path) }}">{{ part.name }}</a>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+    <h1>{{ filename }}</h1>
+</div>
+
+<div class="repo-nav-tabs">
+    <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="tab-link">Overview</a>
+    <a href="{{ url_for('files_page', repo_name=repo_name) }}" class="tab-link active">Files</a>
+    <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="tab-link">Branches</a>
+    <a href="{{ url_for('commits_page', repo_name=repo_name) }}" class="tab-link">Commits</a>
+    <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="tab-link">Status</a>
+</div>
+
+<div class="file-view-header">
+    <div class="file-meta">
+        <span class="file-meta-item">
+            <strong>{{ filename }}</strong>
+        </span>
+    </div>
+    <div class="file-actions">
+        <a href="{{ url_for('download_file', repo_name=repo_name).include_query_params(path=path) }}" class="btn btn-sm btn-secondary">
+            <span class="icon">↓</span> Download
+        </a>
+        {% if parent_path is not none %}
+            <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=parent_path) }}" class="btn btn-sm">
+                ← Back to folder
+            </a>
+        {% else %}
+            <a href="{{ url_for('files_page', repo_name=repo_name) }}" class="btn btn-sm">
+                ← Back to files
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="file-view-container">
+    <pre><code class="file-content">{{ content }}</code></pre>
+</div>
+
+<div class="back-link">
+    {% if parent_path is not none %}
+        <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=parent_path) }}">← Back to folder</a>
+    {% else %}
+        <a href="{{ url_for('files_page', repo_name=repo_name) }}">← Back to files</a>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -1,5 +1,6 @@
 """Git repository operations service."""
 
+import mimetypes
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -761,3 +762,89 @@ Happy coding!
             return sum(1 for _ in repo.iter_commits(all=True))
         except Exception:
             return 0
+
+    @staticmethod
+    def list_directory(repo_path: Path, subpath: str = "") -> dict:
+        """List directory contents with metadata.
+
+        Args:
+            repo_path: Path to repository root
+            subpath: Relative subpath inside repository
+
+        Returns:
+            Dict with entries list and optional error
+        """
+        try:
+            target = repo_path / subpath if subpath else repo_path
+            target = target.resolve()
+
+            # Ensure we stay within repo
+            target.relative_to(repo_path.resolve())
+
+            if not target.exists() or not target.is_dir():
+                return {"entries": [], "error": "Directory not found"}
+
+            entries = []
+            for item in sorted(target.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower())):
+                stat = item.stat()
+                entries.append(
+                    {
+                        "name": item.name,
+                        "is_dir": item.is_dir(),
+                        "path": str((Path(subpath) / item.name).as_posix()) if subpath else item.name,
+                        "size": stat.st_size if item.is_file() else None,
+                        "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                    }
+                )
+
+            return {"entries": entries, "error": None}
+        except Exception as e:
+            logger.error(f"Error listing directory: {e}")
+            return {"entries": [], "error": str(e)}
+
+    @staticmethod
+    def is_text_file(file_path: Path) -> bool:
+        """Check if a file is safe to display as text.
+
+        Args:
+            file_path: Path to file
+
+        Returns:
+            True if file appears to be text, False otherwise
+        """
+        try:
+            mime, _ = mimetypes.guess_type(str(file_path))
+            if mime:
+                if mime.startswith("text/") or mime in (
+                    "application/json",
+                    "application/javascript",
+                    "application/xml",
+                    "application/x-sh",
+                    "application/x-python-code",
+                    "application/x-httpd-php",
+                ):
+                    return True
+                return False
+
+            # Fallback: check for null bytes
+            with open(file_path, "rb") as f:
+                chunk = f.read(8192)
+                return b"\x00" not in chunk
+        except Exception as e:
+            logger.error(f"Error checking text file: {e}")
+            return False
+
+    @staticmethod
+    def get_safe_mime_type(file_path: Path) -> str:
+        """Get safe MIME type for a file.
+
+        Args:
+            file_path: Path to file
+
+        Returns:
+            MIME type string
+        """
+        mime, _ = mimetypes.guess_type(str(file_path))
+        if mime:
+            return mime
+        return "application/octet-stream"
