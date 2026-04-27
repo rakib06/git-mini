@@ -1,17 +1,21 @@
 """Git repository operations service."""
 
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 from git import Repo, GitCommandError
 
+from app.core.config import settings
 from app.core.logger import logger
 from app.utils.path_security import (
+    sanitize_repo_name,
     validate_repo_path,
     validate_temp_local_path,
     ensure_temp_local_dir,
 )
+from app.utils.storage import RepositoryStorage
 
 
 class GitService:
@@ -254,28 +258,102 @@ class GitService:
             return False
 
     @staticmethod
-    def create_bare_repo(name: str, remote_path: str) -> bool:
+    def create_bare_repo(repo_name: str) -> dict:
         """Create a new bare repository on LAN share.
 
+        1. Sanitize name
+        2. Ensure .git suffix
+        3. Build full LAN path from settings.allowed_paths[0]
+        4. If exists -> error
+        5. git init --bare full_path (no shell)
+        6. Save repo metadata
+        7. Return success message
+
         Args:
-            name: Repository name
-            remote_path: Path to create bare repo
+            repo_name: Repository name to create
 
         Returns:
-            True if successful, False otherwise
+            Dict with status, name, and remote_path
         """
-        validated_path = validate_repo_path(remote_path)
-        if not validated_path:
-            logger.error(f"Invalid remote path: {remote_path}")
-            return False
+        # 1. Sanitize name
+        clean_name = sanitize_repo_name(repo_name)
+        if not clean_name:
+            return {"status": "error", "message": f"Invalid repository name: '{repo_name}'"}
+
+        # 2. Ensure .git suffix
+        if clean_name.endswith(".git"):
+            bare_name = clean_name
+        else:
+            bare_name = f"{clean_name}.git"
+
+        # 3. Build full LAN path from settings.allowed_paths[0]
+        if not settings.allowed_paths:
+            return {
+                "status": "error",
+                "message": "No allowed LAN paths configured in settings.json",
+            }
+
+        base_lan_path = Path(settings.allowed_paths[0])
+        full_path = base_lan_path / bare_name
+
+        # 4. If exists -> error
+        if full_path.exists():
+            return {
+                "status": "error",
+                "message": f"Repository already exists at {full_path}",
+            }
+
+        # Ensure parent directory exists (Windows UNC safe via pathlib)
+        try:
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            logger.error(f"Failed to create parent directory: {e}")
+            return {
+                "status": "error",
+                "message": f"Failed to create parent directory: {e}",
+            }
+
+        # 5. git init --bare full_path (no shell=True)
+        try:
+            logger.info(f"Creating bare repo at: {full_path}")
+            subprocess.run(
+                ["git", "init", "--bare", str(full_path)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            logger.info(f"Bare repo created: {full_path}")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"git init --bare failed: {e.stderr}")
+            return {"status": "error", "message": f"git init failed: {e.stderr}"}
+        except FileNotFoundError:
+            logger.error("git executable not found")
+            return {"status": "error", "message": "Git executable not found"}
+
+        # 6. Save repo metadata (use the name without .git as key)
+        repo_key = clean_name.removesuffix(".git")
+        remote_path_str = str(full_path)
 
         try:
-            repo = Repo.init(str(validated_path), bare=True)
-            logger.info(f"Created bare repository: {validated_path}")
-            return True
+            RepositoryStorage.add_repo(repo_key, remote_path_str)
+            logger.info(f"Repo metadata saved: {repo_key} -> {remote_path_str}")
         except Exception as e:
-            logger.error(f"Error creating bare repo: {e}")
-            return False
+            logger.error(f"Failed to save repo metadata: {e}")
+            # Repo was created but metadata not saved — still report success but warn
+            return {
+                "status": "warning",
+                "message": f"Bare repo created but metadata save failed",
+                "name": repo_key,
+                "remote_path": remote_path_str,
+            }
+
+        # 7. Return success message
+        return {
+            "status": "success",
+            "message": f"Bare repository '{repo_key}' created on LAN",
+            "name": repo_key,
+            "remote_path": remote_path_str,
+        }
 
     @staticmethod
     def list_repos() -> list[dict]:
@@ -284,8 +362,6 @@ class GitService:
         Returns:
             List of repository configurations
         """
-        from app.utils.storage import RepositoryStorage
-
         try:
             repos = RepositoryStorage.list_repos()
             result = []
@@ -315,8 +391,6 @@ class GitService:
         Returns:
             Path to local clone, or None if failed
         """
-        from app.utils.storage import RepositoryStorage
-
         repo_config = RepositoryStorage.get_repo(repo_name)
         if not repo_config:
             logger.error(f"Repository not found: {repo_name}")
@@ -334,8 +408,6 @@ class GitService:
         Returns:
             Path to cloned repository, or None on error
         """
-        from app.utils.storage import RepositoryStorage
-
         repo_config = RepositoryStorage.get_repo(repo_name)
         if not repo_config:
             logger.error(f"Repository config not found: {repo_name}")

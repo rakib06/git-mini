@@ -33,6 +33,12 @@ class PushRequest(BaseModel):
     branch: str = "main"
 
 
+class CreateBareRepoRequest(BaseModel):
+    """Request to create a bare repository."""
+
+    name: str
+
+
 @router.get("/repositories")
 async def list_repositories() -> dict:
     """List all registered repositories."""
@@ -63,6 +69,22 @@ async def add_repository(req: RepoAddRequest) -> dict:
     except Exception as e:
         logger.error(f"Error adding repo: {e}")
         raise HTTPException(status_code=500, detail="Failed to add repository")
+
+
+@router.post("/repositories/create-bare")
+async def create_bare_repository(req: CreateBareRepoRequest) -> dict:
+    """Create a new bare repository on LAN share."""
+    if not req.name:
+        raise HTTPException(status_code=400, detail="name is required")
+
+    result = GitService.create_bare_repo(req.name)
+
+    if result["status"] == "error":
+        raise HTTPException(status_code=400, detail=result["message"])
+    elif result["status"] == "warning":
+        return result
+    else:
+        return result
 
 
 @router.delete("/repositories/{repo_name}")
