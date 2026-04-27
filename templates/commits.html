@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Commits - {{ repo_name }} - Mini GitHub LAN{% endblock %}
+
+{% block content %}
+<div class="commits-page">
+    <h1>Commits - {{ repo_name }}</h1>
+    
+    {% if commits %}
+        <div class="commits-list">
+            {% for commit in commits %}
+                <div class="commit-item">
+                    <div class="commit-header">
+                        <a href="/repo/{{ repo_name }}/diff/{{ commit.full_sha }}" class="commit-sha">{{ commit.sha }}</a>
+                        <span class="commit-message">{{ commit.message.split('\n')[0] }}</span>
+                    </div>
+                    <div class="commit-meta">
+                        <span class="author">{{ commit.author }}</span>
+                        <span class="email">&lt;{{ commit.email }}&gt;</span>
+                        <span class="timestamp">{{ commit.timestamp }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No commits found.</p>
+    {% endif %}
+    
+    <div class="back-link">
+        <a href="/repo/{{ repo_name }}">&larr; Back to {{ repo_name }}</a>
+    </div>
+</div>
+{% endblock %}

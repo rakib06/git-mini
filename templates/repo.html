@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ repo_name }} - Mini GitHub LAN{% endblock %}
+
+{% block content %}
+<div class="repo-page">
+    <h1>{{ repo_name }}</h1>
+    <p class="repo-path">{{ repo_config.remote_path }}</p>
+    
+    {% if status %}
+        <div class="status-info">
+            <div class="status-item">
+                <span class="label">Branch:</span>
+                <span class="value">{{ status.branch }}</span>
+            </div>
+            <div class="status-item">
+                <span class="label">Status:</span>
+                <span class="value">{% if status.is_dirty %}<span class="badge badge-warning">Dirty</span>{% else %}<span class="badge badge-success">Clean</span>{% endif %}</span>
+            </div>
+        </div>
+    {% endif %}
+    
+    <div class="nav-tabs">
+        <a href="/repo/{{ repo_name }}" class="tab-link active">Overview</a>
+        <a href="/repo/{{ repo_name }}/branches" class="tab-link">Branches</a>
+        <a href="/repo/{{ repo_name }}/commits" class="tab-link">Commits</a>
+        <a href="/repo/{{ repo_name }}/status" class="tab-link">Status</a>
+    </div>
+    
+    <div class="repo-actions">
+        <button class="btn btn-primary" onclick="cloneRepo('{{ repo_name }}')">Fetch/Pull</button>
+        <a href="/" class="btn btn-secondary">Back to Repos</a>
+    </div>
+</div>
+{% endblock %}

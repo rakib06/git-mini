@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Diff - {{ commit_sha }} - Mini GitHub LAN{% endblock %}
+
+{% block content %}
+<div class="diff-page">
+    <h1>Commit: {{ commit_sha }}</h1>
+    
+    <div class="diff-content">
+        <pre><code>{{ diff }}</code></pre>
+    </div>
+    
+    <div class="back-link">
+        <a href="/repo/{{ repo_name }}/commits">&larr; Back to Commits</a>
+    </div>
+</div>
+{% endblock %}

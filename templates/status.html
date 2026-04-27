@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Status - {{ repo_name }} - Mini GitHub LAN{% endblock %}
+
+{% block content %}
+<div class="status-page">
+    <h1>Status - {{ repo_name }}</h1>
+    
+    {% if status %}
+        <div class="status-details">
+            <div class="status-section">
+                <h3>Repository Info</h3>
+                <p><strong>Branch:</strong> {{ status.branch }}</p>
+                <p><strong>State:</strong> {% if status.is_dirty %}<span class="badge badge-warning">Dirty</span>{% else %}<span class="badge badge-success">Clean</span>{% endif %}</p>
+            </div>
+            
+            {% if status.staged %}
+                <div class="status-section">
+                    <h3>Staged Changes</h3>
+                    <ul class="file-list">
+                        {% for file in status.staged %}
+                            <li>{{ file }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            
+            {% if status.unstaged %}
+                <div class="status-section">
+                    <h3>Unstaged Changes</h3>
+                    <ul class="file-list">
+                        {% for file in status.unstaged %}
+                            <li>{{ file }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            
+            {% if status.untracked_files %}
+                <div class="status-section">
+                    <h3>Untracked Files</h3>
+                    <ul class="file-list">
+                        {% for file in status.untracked_files %}
+                            <li>{{ file }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            
+            <div class="status-actions">
+                <button class="btn btn-primary" onclick="stageAll('{{ repo_name }}')">Stage All</button>
+                <button class="btn btn-secondary" onclick="openCommitDialog()">Commit</button>
+                <button class="btn btn-success" onclick="pushChanges('{{ repo_name }}')">Push</button>
+            </div>
+        </div>
+    {% else %}
+        <p>Unable to get repository status.</p>
+    {% endif %}
+    
+    <div class="back-link">
+        <a href="/repo/{{ repo_name }}">&larr; Back to {{ repo_name }}</a>
+    </div>
+</div>
+
+<!-- Commit Dialog -->
+<div id="commitDialog" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeCommitDialog()">&times;</span>
+        <h2>Create Commit</h2>
+        <form onsubmit="createCommit(event, '{{ repo_name }}')">
+            <div class="form-group">
+                <label for="commitMessage">Message:</label>
+                <textarea id="commitMessage" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="authorName">Author Name:</label>
+                <input type="text" id="authorName" value="User">
+            </div>
+            <div class="form-group">
+                <label for="authorEmail">Author Email:</label>
+                <input type="email" id="authorEmail" value="user@local">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Commit</button>
+                <button type="button" class="btn btn-secondary" onclick="closeCommitDialog()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

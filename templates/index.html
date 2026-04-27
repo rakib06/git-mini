@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Repositories - Mini GitHub LAN{% endblock %}
+
+{% block content %}
+<div class="repositories-page">
+    <h1>Repositories</h1>
+    
+    <div class="actions">
+        <button class="btn btn-primary" onclick="openAddRepoDialog()">+ Add Repository</button>
+    </div>
+    
+    {% if repositories %}
+        <div class="repos-grid">
+            {% for repo_name, repo_config in repositories.items() %}
+                <div class="repo-card">
+                    <h3><a href="/repo/{{ repo_name }}">{{ repo_name }}</a></h3>
+                    <p class="repo-path">{{ repo_config.remote_path }}</p>
+                    <div class="repo-actions">
+                        <a href="/repo/{{ repo_name }}" class="btn btn-small">Open</a>
+                        <button class="btn btn-small btn-secondary" onclick="cloneRepo('{{ repo_name }}')">Clone/Fetch</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteRepo('{{ repo_name }}')">Delete</button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No repositories configured yet.</p>
+            <button class="btn btn-primary" onclick="openAddRepoDialog()">Add your first repository</button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Add Repository Dialog -->
+<div id="addRepoDialog" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAddRepoDialog()">&times;</span>
+        <h2>Add Repository</h2>
+        <form onsubmit="addRepository(event)">
+            <div class="form-group">
+                <label for="repoName">Repository Name:</label>
+                <input type="text" id="repoName" required>
+            </div>
+            <div class="form-group">
+                <label for="remotePath">Remote Path:</label>
+                <input type="text" id="remotePath" placeholder="\\192.168.0.123\share\repos\myrepo.git" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Add</button>
+                <button type="button" class="btn btn-secondary" onclick="closeAddRepoDialog()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

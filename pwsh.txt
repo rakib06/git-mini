@@ -1,0 +1,66 @@
+# Run from the parent directory where you want git-mini-lan created
+
+$root = "git-mini-lan"
+
+# Create folders
+$folders = @(
+    "$root/app",
+    "$root/app/core",
+    "$root/app/routers",
+    "$root/app/services",
+    "$root/app/utils",
+    "$root/templates",
+    "$root/templates/partials",
+    "$root/static",
+    "$root/static/css",
+    "$root/static/js",
+    "$root/config",
+    "$root/logs",
+    "$root/temp_local"
+)
+
+$folders | ForEach-Object {
+    New-Item -ItemType Directory -Path $_ -Force | Out-Null
+}
+
+# Create files
+$files = @(
+    "$root/app/main.py",
+    "$root/app/core/config.py",
+    "$root/app/core/logger.py",
+    "$root/app/routers/web.py",
+    "$root/app/routers/api.py",
+    "$root/app/services/git_service.py",
+    "$root/app/utils/path_security.py",
+    "$root/app/utils/storage.py",
+
+    "$root/templates/base.html",
+    "$root/templates/index.html",
+    "$root/templates/repo.html",
+    "$root/templates/branches.html",
+    "$root/templates/commits.html",
+    "$root/templates/status.html",
+    "$root/templates/settings.html",
+    "$root/templates/diff.html",
+
+    "$root/templates/partials/_header.html",
+    "$root/templates/partials/_footer.html",
+    "$root/templates/partials/_sidebar.html",
+    "$root/templates/partials/_alerts.html",
+
+    "$root/static/css/style.css",
+    "$root/static/js/app.js",
+
+    "$root/config/settings.json",
+    "$root/config/repos.json",
+
+    "$root/logs/app.log",
+
+    "$root/app_launcher.py"
+)
+
+$files | ForEach-Object {
+    New-Item -ItemType File -Path $_ -Force | Out-Null
+}
+
+Write-Host "Project structure created successfully: $root"

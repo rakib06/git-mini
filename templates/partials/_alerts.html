@@ -1,0 +1,10 @@
+{% if alerts %}
+    <div class="alerts">
+        {% for alert in alerts %}
+            <div class="alert alert-{{ alert.type }}">
+                <span class="alert-message">{{ alert.message }}</span>
+                <button class="alert-close" onclick="this.parentElement.style.display='none';">&times;</button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

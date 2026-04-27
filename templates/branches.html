@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Branches - {{ repo_name }} - Mini GitHub LAN{% endblock %}
+
+{% block content %}
+<div class="branches-page">
+    <h1>Branches - {{ repo_name }}</h1>
+    
+    {% if branches %}
+        <table class="branches-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Commit</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for branch in branches %}
+                    <tr>
+                        <td>
+                            <span class="branch-name">{{ branch.name }}</span>
+                            {% if branch.is_current %}
+                                <span class="badge badge-primary">current</span>
+                            {% endif %}
+                        </td>
+                        <td><code>{{ branch.commit }}</code></td>
+                        <td>
+                            {% if branch.is_current %}
+                                <span class="badge badge-info">Active</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No branches found.</p>
+    {% endif %}
+    
+    <div class="back-link">
+        <a href="/repo/{{ repo_name }}">&larr; Back to {{ repo_name }}</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Mini GitHub LAN{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <h1>Settings</h1>
+    
+    <div class="settings-section">
+        <h3>Server Configuration</h3>
+        <div class="setting-item">
+            <label>Host:</label>
+            <code>{{ host }}</code>
+        </div>
+        <div class="setting-item">
+            <label>Port:</label>
+            <code>{{ port }}</code>
+        </div>
+        <div class="setting-item">
+            <label>Temp Local Directory:</label>
+            <code>{{ temp_local_dir }}</code>
+        </div>
+    </div>
+    
+    <div class="settings-section">
+        <h3>Allowed Paths</h3>
+        <ul class="path-list">
+            {% for path in allowed_paths %}
+                <li><code>{{ path }}</code></li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <div class="back-link">
+        <a href="/">&larr; Back to Repositories</a>
+    </div>
+</div>
+{% endblock %}
