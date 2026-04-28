@@ -23,7 +23,7 @@
     <h1>Files</h1>
 </div>
 
-<div class="repo-nav-tabs">
+<div class="repo-nav-tabs-modern">
     <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="tab-link">Overview</a>
     <a href="{{ url_for('files_page', repo_name=repo_name) }}" class="tab-link active">Files</a>
     <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="tab-link">Branches</a>
@@ -70,9 +70,14 @@
                                     <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="file-name folder-name">{{ entry.name }}</a>
                                 {% else %}
                                     <span class="file-icon file">📄</span>
-                                    <span class="file-name ext-{{ entry.ext }}">{{ entry.name }}</span>
-                                    {% if entry.lang_class %}
-                                        <span class="language-badge">{{ entry.ext }}</span>
+                                    {% if entry.is_binary %}
+                                        <span class="file-name">{{ entry.name }}</span>
+                                        <span class="file-badge file-badge-binary">Binary</span>
+                                    {% else %}
+                                        <a href="{{ url_for('view_file_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="file-name ext-{{ entry.ext }}">{{ entry.name }}</a>
+                                        {% if entry.lang_class %}
+                                            <span class="language-badge">{{ entry.ext }}</span>
+                                        {% endif %}
                                     {% endif %}
                                 {% endif %}
                             </td>
@@ -90,7 +95,9 @@
                                 {% if entry.is_dir %}
                                     <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="btn btn-sm">Open</a>
                                 {% else %}
-                                    <a href="{{ url_for('view_file_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="btn btn-sm">View</a>
+                                    {% if not entry.is_binary %}
+                                        <a href="{{ url_for('view_file_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="btn btn-sm">View</a>
+                                    {% endif %}
                                     <a href="{{ url_for('download_file', repo_name=repo_name).include_query_params(path=entry.path) }}" class="btn btn-sm btn-secondary">Download</a>
                                 {% endif %}
                             </td>

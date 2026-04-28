@@ -15,6 +15,14 @@
     </p>
 </div>
 
+<div class="repo-nav-tabs-modern">
+    <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="tab-link">Overview</a>
+    <a href="{{ url_for('files_page', repo_name=repo_name) }}" class="tab-link">Files</a>
+    <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="tab-link">Branches</a>
+    <a href="{{ url_for('commits_page', repo_name=repo_name) }}" class="tab-link">Commits</a>
+    <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="tab-link">Status</a>
+</div>
+
 <div class="diff-container">
     {% if diff %}
         <div class="diff-content">

@@ -47,14 +47,14 @@
                 
                 <div class="card-footer">
                     <div class="card-actions">
-                        <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="btn btn-sm btn-primary">Open</a>
+                        <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="btn btn-sm btn-secondary">Open</a>
                         <button class="btn btn-sm btn-secondary" onclick="cloneRepo('{{ repo_name }}')">
-                            <span class="icon">&#8595;</span> Clone
+                            <span class="icon">&#8595;</span> Sync
                         </button>
-                        <button class="btn btn-sm btn-success" onclick="pushRepo('{{ repo_name }}')">
-                            <span class="icon">&#8593;</span> Push
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteRepo('{{ repo_name }}')">Delete</button>
+                    </div>
+                    <div class="card-clone-row">
+                        <code class="clone-command">git clone "{{ repo_config.remote_path }}"</code>
+                        <button class="btn btn-copy-icon" onclick="copyCloneCommand('{{ repo_config.remote_path }}')" title="Copy clone command">📋</button>
                     </div>
                 </div>
             </div>

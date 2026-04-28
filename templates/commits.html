@@ -11,6 +11,14 @@
     <h1>Commits</h1>
 </div>
 
+<div class="repo-nav-tabs-modern">
+    <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="tab-link">Overview</a>
+    <a href="{{ url_for('files_page', repo_name=repo_name) }}" class="tab-link">Files</a>
+    <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="tab-link">Branches</a>
+    <a href="{{ url_for('commits_page', repo_name=repo_name) }}" class="tab-link active">Commits</a>
+    <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="tab-link">Status</a>
+</div>
+
 {% if commits %}
     <div class="commits-list">
         {% for commit in commits %}
@@ -23,6 +31,7 @@
                         <div class="commit-message">
                             {{ commit.message.split('\n')[0] }}
                         </div>
+                    </div>
                 </div>
                 
                 <div class="commit-details">
@@ -50,6 +59,7 @@
                         View Diff
                     </a>
                 </div>
+            </div>
         {% endfor %}
     </div>
 {% else %}

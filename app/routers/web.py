@@ -63,8 +63,19 @@ async def repo_page(request: Request, repo_name: str) -> HTMLResponse:
         status = GitService.get_status(temp_repo_path)
         branches = GitService.get_branches(temp_repo_path)
         commits = GitService.get_commits(temp_repo_path, max_count=10)
-        is_empty = GitService.is_empty_repo(repo_config["remote_path"])
         commit_count = GitService.get_commit_count(temp_repo_path)
+
+        # Check if local clone has files (not just if bare repo is empty)
+        root_listing = GitService.list_directory(temp_repo_path, "")
+        has_files = bool(root_listing.get("entries"))
+        # If local clone has files, it's not empty even if bare repo has no commits
+        is_empty = not has_files and GitService.is_empty_repo(repo_config["remote_path"])
+
+        # Add previewability flag to root entries
+        for entry in root_listing.get("entries", []):
+            if not entry.get("is_dir"):
+                entry_path = temp_repo_path / entry["path"]
+                entry["is_previewable"] = GitService.is_text_file(entry_path)
 
         return templates.TemplateResponse(
             request,
@@ -77,6 +88,8 @@ async def repo_page(request: Request, repo_name: str) -> HTMLResponse:
                 "recent_commits": commits,
                 "sync_status": "success" if sync_result else "warning",
                 "is_empty": is_empty,
+                "has_files": has_files,
+                "root_entries": root_listing.get("entries", []),
                 "commit_count": commit_count,
                 "remote_path": repo_config["remote_path"],
             },
@@ -205,6 +218,12 @@ async def files_page(request: Request, repo_name: str, path: str = "") -> HTMLRe
             )
 
         result = GitService.list_directory(temp_repo_path, path)
+
+        # Add is_binary flag to entries
+        for entry in result.get("entries", []):
+            if not entry.get("is_dir"):
+                entry_path = target_path / entry["name"]
+                entry["is_binary"] = not GitService.is_text_file(entry_path)
 
         # Breadcrumb parts
         breadcrumb_parts = []

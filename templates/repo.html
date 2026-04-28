@@ -3,28 +3,43 @@
 {% block title %}{{ repo_name }} - Mini GitHub LAN{% endblock %}
 
 {% block content %}
-<div class="repo-header">
-    <div class="breadcrumb">
-        <a href="{{ url_for('index') }}">&#8592; Repositories</a>
+<div class="breadcrumb">
+    <a href="{{ url_for('index') }}">&#8592; Repositories</a>
+</div>
+
+<div class="repo-header-modern">
+    <div class="repo-header-top">
+        <div class="repo-header-main">
+            <h1>{{ repo_name }}</h1>
+            <div class="repo-header-meta">
+                {% if is_empty %}
+                    <span class="badge badge-warning">Empty Repository</span>
+                {% else %}
+                    <span class="badge badge-success">&#10003; Repository synced with latest changes</span>
+                {% endif %}
+                <span class="repo-header-path">{{ remote_path }}</span>
+            </div>
+        </div>
+        <div class="repo-header-actions-modern">
+            <div class="repo-clone-row">
+                <code class="clone-command">git clone "{{ remote_path }}"</code>
+                <button class="btn btn-copy-icon" onclick="copyCloneCommand('{{ remote_path }}')" title="Copy clone command">📋</button>
+            </div>
+            <div class="kebab-menu-wrapper">
+                <button class="kebab-btn" onclick="toggleKebabMenu('repoKebabMenu')" aria-label="More actions">
+                    &#8942;
+                </button>
+                <div id="repoKebabMenu" class="kebab-dropdown">
+                    <button class="kebab-dropdown-item danger" onclick="deleteRepo('{{ repo_name }}')">
+                        <span>&#128465;</span> Delete Repository
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="repo-title-row">
-        <h1>{{ repo_name }}</h1>
-        {% if is_empty %}
-            <span class="badge badge-warning">Empty Repository</span>
-        {% endif %}
-    </div>
-    <p class="text-muted"><code>{{ remote_path }}</code></p>
 </div>
 
 {% if status %}
-    <div class="status-banner">
-        {% if sync_status == 'success' %}
-            <div class="alert alert-success">&#10003; Repository synced with latest changes</div>
-        {% elif sync_status == 'warning' %}
-            <div class="alert alert-warning">&#9888; Partial sync - working directory is up to date</div>
-        {% endif %}
-    </div>
-    
     <div class="status-grid">
         <div class="status-card">
             <div class="status-label">Branch</div>
@@ -60,10 +75,10 @@
     </div>
 {% endif %}
 
-<div class="repo-nav-tabs">
+<div class="repo-nav-tabs-modern">
     <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="tab-link active">Overview</a>
     <a href="{{ url_for('files_page', repo_name=repo_name) }}" class="tab-link">Files</a>
-    <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="tab-link">Branches ({{ branches|length }})</a>
+    <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="tab-link">Branches <span class="tab-count">{{ branches|length }}</span></a>
     <a href="{{ url_for('commits_page', repo_name=repo_name) }}" class="tab-link">Commits</a>
     <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="tab-link">Status</a>
 </div>
@@ -108,62 +123,109 @@ git push -u origin main</code></pre>
         </div>
     </div>
     {% else %}
-        {% if recent_commits %}
-        <div class="section">
-            <h2>Recent Commits ({{ commit_count }})</h2>
-            <div class="commits-mini">
-                {% for commit in recent_commits[:5] %}
-                    <div class="commit-mini">
-                        <div class="commit-sha">
-                            <a href="{{ url_for('diff_page', repo_name=repo_name, commit_sha=commit.full_sha) }}">
-                                <code>{{ commit.sha }}</code>
-                            </a>
+        {% if has_files %}
+        <div class="section-card">
+            <div class="section-card-header">
+                <h2>Files</h2>
+                <a href="{{ url_for('files_page', repo_name=repo_name) }}" class="btn btn-sm">View all &#8594;</a>
+            </div>
+            <div class="section-card-body">
+                <div class="file-list-compact">
+                    {% for entry in root_entries[:10] %}
+                        <div class="file-item-compact">
+                            {% if entry.is_dir %}
+                                <span class="file-icon folder">&#128193;</span>
+                                <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="file-name folder-name">{{ entry.name }}</a>
+                            {% else %}
+                                <span class="file-icon file">&#128196;</span>
+                                {% if entry.is_previewable %}
+                                    <a href="{{ url_for('view_file_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="file-name ext-{{ entry.ext }}">{{ entry.name }}</a>
+                                {% else %}
+                                    <span class="file-name ext-{{ entry.ext }}">{{ entry.name }}</span>
+                                {% endif %}
+                                {% if entry.lang_class %}
+                                    <span class="language-badge">{{ entry.ext }}</span>
+                                {% endif %}
+                            {% endif %}
                         </div>
-                        <div class="commit-info">
-                            <div class="commit-msg">{{ commit.message.split('\n')[0] }}</div>
-                            <div class="commit-meta">
-                                <span class="author">{{ commit.author }}</span>
-                                <span class="timestamp">{{ commit.timestamp }}</span>
+                    {% endfor %}
+                    {% if root_entries|length > 10 %}
+                        <div class="more-link">
+                            <a href="{{ url_for('files_page', repo_name=repo_name) }}">View all files &#8594;</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if recent_commits %}
+        <div class="section-card">
+            <div class="section-card-header">
+                <h2>Recent Commits ({{ commit_count }})</h2>
+                <a href="{{ url_for('commits_page', repo_name=repo_name) }}" class="btn btn-sm">View all &#8594;</a>
+            </div>
+            <div class="section-card-body">
+                <div class="commits-mini">
+                    {% for commit in recent_commits[:5] %}
+                        <div class="commit-mini">
+                            <div class="commit-sha">
+                                <a href="{{ url_for('diff_page', repo_name=repo_name, commit_sha=commit.full_sha) }}">
+                                    <code>{{ commit.sha }}</code>
+                                </a>
+                            </div>
+                            <div class="commit-info">
+                                <div class="commit-msg">{{ commit.message.split('\n')[0] }}</div>
+                                <div class="commit-meta">
+                                    <span class="author">{{ commit.author }}</span>
+                                    <span class="timestamp">{{ commit.timestamp }}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                {% endfor %}
-                {% if recent_commits|length > 5 %}
-                    <div class="more-link">
-                        <a href="{{ url_for('commits_page', repo_name=repo_name) }}">View all commits &#8594;</a>
-                    </div>
-                {% endif %}
+                    {% endfor %}
+                    {% if recent_commits|length > 5 %}
+                        <div class="more-link">
+                            <a href="{{ url_for('commits_page', repo_name=repo_name) }}">View all commits &#8594;</a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% endif %}
         
         {% if branches %}
-        <div class="section">
-            <h2>Branches</h2>
-            <div class="branches-mini">
-                {% for branch in branches[:10] %}
-                    <div class="branch-item">
-                        {% if branch.is_current %}
-                            <span class="badge badge-primary">{{ branch.name }}</span>
-                        {% else %}
-                            <span class="branch-name">{{ branch.name }}</span>
-                        {% endif %}
-                        <code class="sha">{{ branch.commit }}</code>
-                    </div>
-                {% endfor %}
-                {% if branches|length > 10 %}
-                    <div class="more-link">
-                        <a href="{{ url_for('branches_page', repo_name=repo_name) }}">View all branches &#8594;</a>
-                    </div>
-                {% endif %}
+        <div class="section-card">
+            <div class="section-card-header">
+                <h2>Branches</h2>
+                <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="btn btn-sm">View all &#8594;</a>
+            </div>
+            <div class="section-card-body">
+                <div class="branches-mini">
+                    {% for branch in branches[:10] %}
+                        <div class="branch-item">
+                            {% if branch.is_current %}
+                                <span class="badge badge-primary">{{ branch.name }}</span>
+                            {% else %}
+                                <span class="branch-name">{{ branch.name }}</span>
+                            {% endif %}
+                            <code class="sha">{{ branch.commit }}</code>
+                        </div>
+                    {% endfor %}
+                    {% if branches|length > 10 %}
+                        <div class="more-link">
+                            <a href="{{ url_for('branches_page', repo_name=repo_name) }}">View all branches &#8594;</a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% endif %}
     {% endif %}
 </div>
 
-<div class="mirror-banner">
-    <p><strong>&#128279; Read-Only Mirror</strong> — This is an auto-synced mirror of the LAN repository. To contribute, clone this repository to your own working directory and use traditional git tools.</p>
+<div class="mirror-banner-modern">
+    <span class="mirror-icon">&#128279;</span>
+    <p><strong>Read-Only Mirror</strong> — This is an auto-synced mirror of the LAN repository. To contribute, clone this repository to your own working directory and use traditional git tools.</p>
 </div>
 {% endblock %}
 

@@ -11,6 +11,14 @@
     <h1>Branches</h1>
 </div>
 
+<div class="repo-nav-tabs-modern">
+    <a href="{{ url_for('repo_page', repo_name=repo_name) }}" class="tab-link">Overview</a>
+    <a href="{{ url_for('files_page', repo_name=repo_name) }}" class="tab-link">Files</a>
+    <a href="{{ url_for('branches_page', repo_name=repo_name) }}" class="tab-link active">Branches <span class="tab-count">{{ branches|length }}</span></a>
+    <a href="{{ url_for('commits_page', repo_name=repo_name) }}" class="tab-link">Commits</a>
+    <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="tab-link">Status</a>
+</div>
+
 {% if branches %}
     <div class="table-container">
         <table class="data-table">
