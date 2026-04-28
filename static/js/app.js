@@ -706,5 +706,20 @@ function enhanceFileBrowser() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Mini GitHub LAN loaded');
     enhanceFileBrowser();
+
+    // Attach copy listeners to buttons with data-copy attributes
+    // Using data attributes avoids JS string escaping issues with Windows UNC paths
+    document.querySelectorAll('.copy-clone-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const text = btn.dataset.copy;
+            if (text) {
+                copyTextToClipboard(text).then(() => {
+                    showToast('Copied!', 'success', 2000);
+                }).catch(() => {
+                    showToast('Failed to copy', 'error', 3000);
+                });
+            }
+        });
+    });
 });
 

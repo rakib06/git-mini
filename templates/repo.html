@@ -23,7 +23,7 @@
         <div class="repo-header-actions-modern">
             <div class="repo-clone-row">
                 <code class="clone-command">git clone "{{ remote_path }}"</code>
-                <button class="btn btn-copy-icon" onclick="copyCloneCommand('{{ remote_path }}')" title="Copy clone command">📋</button>
+<button class="btn btn-copy-icon copy-clone-btn" data-copy='git clone "{{ remote_path }}"' title="Copy clone command">📋</button>
             </div>
             <div class="kebab-menu-wrapper">
                 <button class="kebab-btn" onclick="toggleKebabMenu('repoKebabMenu')" aria-label="More actions">
