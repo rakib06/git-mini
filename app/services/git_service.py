@@ -71,6 +71,57 @@ class GitService:
 
    
     @staticmethod
+    def _get_lang_class(ext: str) -> str:
+        """Map file extension to a CSS language class."""
+        mapping = {
+            "py": "python",
+            "js": "javascript",
+            "ts": "typescript",
+            "jsx": "jsx",
+            "tsx": "tsx",
+            "html": "html",
+            "htm": "html",
+            "css": "css",
+            "scss": "scss",
+            "sass": "sass",
+            "json": "json",
+            "xml": "xml",
+            "yaml": "yaml",
+            "yml": "yaml",
+            "md": "markdown",
+            "markdown": "markdown",
+            "sh": "bash",
+            "bash": "bash",
+            "zsh": "bash",
+            "ps1": "powershell",
+            "sql": "sql",
+            "java": "java",
+            "kt": "kotlin",
+            "c": "c",
+            "cpp": "cpp",
+            "cc": "cpp",
+            "h": "c",
+            "hpp": "cpp",
+            "cs": "csharp",
+            "go": "go",
+            "rs": "rust",
+            "rb": "ruby",
+            "php": "php",
+            "swift": "swift",
+            "r": "r",
+            "dart": "dart",
+            "lua": "lua",
+            "dockerfile": "docker",
+            "tf": "hcl",
+            "ini": "ini",
+            "cfg": "ini",
+            "toml": "toml",
+            "vue": "vue",
+            "svelte": "svelte",
+        }
+        return mapping.get(ext, "")
+
+    @staticmethod
     def clone_or_fetch(
         remote_path: str,
         repo_name: str,
@@ -140,8 +191,11 @@ class GitService:
                             else:
                                 repo.git.checkout(branch_name)
 
-                            # Pull latest changes
-                            repo.git.pull("origin", branch_name)
+                            # Hard reset to origin to enforce mirror
+                            repo.git.reset("--hard", f"origin/{branch_name}")
+                            # Clean untracked files
+                            repo.git.clean("-fd")
+                            logger.info(f"Mirrored branch: {branch_name}")
 
                         except Exception as e:
                             logger.warning(
@@ -153,7 +207,7 @@ class GitService:
                         repo.git.checkout(current_branch)
 
                 # ----------------------------------------------
-                # Sync current branch only
+                # Sync current branch only (mirror mode)
                 # ----------------------------------------------
                 else:
                     if repo.head.is_detached:
@@ -162,10 +216,13 @@ class GitService:
                         )
                     else:
                         try:
-                            repo.git.pull()
+                            branch = repo.active_branch.name
+                            repo.git.reset("--hard", f"origin/{branch}")
+                            repo.git.clean("-fd")
+                            logger.info(f"Mirrored branch: {branch}")
                         except Exception as e:
                             logger.warning(
-                                f"Pull failed: {e}"
+                                f"Mirror sync failed: {e}"
                             )
 
                 logger.info(f"Repository updated: {repo_name}")
@@ -616,7 +673,7 @@ Happy coding!
 
     @staticmethod
     def sync_repo(repo_name: str) -> bool:
-        """Sync repository (fetch + pull).
+        """Sync repository (fetch + hard reset) to enforce mirror.
 
         Args:
             repo_name: Repository name
@@ -633,22 +690,20 @@ Happy coding!
             logger.info(f"Syncing repository: {repo_name}")
             repo = Repo(str(temp_repo_path))
 
-            # Fetch all remotes
-            for remote in repo.remotes:
-                logger.debug(f"Fetching from: {remote.name}")
-                remote.fetch()
+            # Fetch all remotes and prune
+            repo.git.fetch("--all", "--prune")
 
-            # Pull on current branch
+            # Hard reset on current branch to enforce mirror
             if repo.head.is_detached:
                 logger.warning(f"Repository in detached HEAD state: {repo_name}")
             else:
-                active_branch = repo.active_branch
-                active_branch.set_tracking_branch(f"{active_branch.name}")
+                active_branch = repo.active_branch.name
                 try:
-                    active_branch.repo.remotes.origin.pull()
-                    logger.info(f"Pulled latest from {active_branch.name}")
+                    repo.git.reset("--hard", f"origin/{active_branch}")
+                    repo.git.clean("-fd")
+                    logger.info(f"Mirrored branch: {active_branch}")
                 except GitCommandError as e:
-                    logger.warning(f"Pull failed: {e}")
+                    logger.warning(f"Mirror sync failed: {e}")
                     return False
 
             logger.info(f"Repository synced: {repo_name}")
@@ -786,7 +841,14 @@ Happy coding!
 
             entries = []
             for item in sorted(target.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower())):
+                # Skip .git directory
+                if item.name == ".git":
+                    continue
+                
                 stat = item.stat()
+                ext = item.suffix.lower().lstrip(".") if item.is_file() else None
+                lang_class = GitService._get_lang_class(ext) if ext else None
+                
                 entries.append(
                     {
                         "name": item.name,
@@ -794,6 +856,8 @@ Happy coding!
                         "path": str((Path(subpath) / item.name).as_posix()) if subpath else item.name,
                         "size": stat.st_size if item.is_file() else None,
                         "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                        "ext": ext,
+                        "lang_class": lang_class,
                     }
                 )
 

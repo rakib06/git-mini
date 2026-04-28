@@ -162,16 +162,8 @@ git push -u origin main</code></pre>
     {% endif %}
 </div>
 
-<div class="repo-actions-footer">
-    <button class="btn btn-secondary" onclick="cloneRepo('{{ repo_name }}')">
-        <span class="icon">&#8595;</span> Fetch Latest
-    </button>
-    <button class="btn btn-secondary" onclick="pushRepo('{{ repo_name }}')">
-        <span class="icon">&#8593;</span> Push to LAN
-    </button>
-    <a href="{{ url_for('status_page', repo_name=repo_name) }}" class="btn btn-secondary">
-        <span class="icon">&#9881;</span> Manage
-    </a>
+<div class="mirror-banner">
+    <p><strong>&#128279; Read-Only Mirror</strong> — This is an auto-synced mirror of the LAN repository. To contribute, clone this repository to your own working directory and use traditional git tools.</p>
 </div>
 {% endblock %}
 
