@@ -71,19 +71,11 @@
             </div>
     {% endif %}
     
-    {% if status.staged or status.unstaged or status.untracked_files %}
-        <div class="status-actions">
-            <button class="btn btn-secondary" onclick="stageAll('{{ repo_name }}')">
-                <span class="icon">+</span> Stage All
-            </button>
-            <button class="btn btn-primary" onclick="openCommitDialog()">
-                <span class="icon">✓</span> Create Commit
-            </button>
-            <button class="btn btn-success" onclick="pushChanges('{{ repo_name }}')">
-                <span class="icon">↑</span> Push Changes
-            </button>
-        </div>
-    {% else %}
+    <div class="mirror-banner">
+        <p><strong>&#128279; Read-Only Mirror</strong> — This page shows the mirror status for diagnostics. Any changes shown here will be overwritten on the next auto-sync. To contribute, clone this repository to your own working directory and use traditional git tools.</p>
+    </div>
+
+    {% if not status.staged and not status.unstaged and not status.untracked_files %}
         <div class="empty-state">
             <p>✓ No changes to commit. Working directory is clean.</p>
         </div>
@@ -95,37 +87,4 @@
 <div class="back-link">
     <a href="{{ url_for('repo_page', repo_name=repo_name) }}">← Back to {{ repo_name }}</a>
 </div>
-
-<!-- Commit Dialog -->
-<div id="commitDialog" class="modal" onclick="closeCommitDialog()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div class="modal-header">
-            <h2>Create Commit</h2>
-            <button class="modal-close" onclick="closeCommitDialog()">&times;</button>
-        </div>
-        
-        <form onsubmit="createCommit(event, '{{ repo_name }}')" class="modal-body">
-            <div class="form-group">
-                <label for="commitMessage">Commit Message <span class="required">*</span></label>
-                <textarea id="commitMessage" placeholder="Describe your changes..." required></textarea>
-                <small class="text-muted">Be descriptive about what changed</small>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="authorName">Author Name</label>
-                    <input type="text" id="authorName" value="User">
-                </div>
-                
-                <div class="form-group">
-                    <label for="authorEmail">Author Email</label>
-                    <input type="email" id="authorEmail" value="user@local">
-                </div>
-            
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Create Commit</button>
-                <button type="button" class="btn btn-secondary" onclick="closeCommitDialog()">Cancel</button>
-            </div>
-        </form>
-    </div>
 {% endblock %}

@@ -70,7 +70,10 @@
                                     <a href="{{ url_for('files_page', repo_name=repo_name).include_query_params(path=entry.path) }}" class="file-name folder-name">{{ entry.name }}</a>
                                 {% else %}
                                     <span class="file-icon file">📄</span>
-                                    <span class="file-name">{{ entry.name }}</span>
+                                    <span class="file-name ext-{{ entry.ext }}">{{ entry.name }}</span>
+                                    {% if entry.lang_class %}
+                                        <span class="language-badge">{{ entry.ext }}</span>
+                                    {% endif %}
                                 {% endif %}
                             </td>
                             <td class="col-size">

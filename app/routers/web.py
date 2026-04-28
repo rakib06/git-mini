@@ -302,6 +302,10 @@ async def view_file_page(request: Request, repo_name: str, path: str = "") -> HT
         # Parent path for back link
         parent_path = "/".join(path.strip("/").split("/")[:-1]) if path else ""
 
+        lang_class = GitService._get_lang_class(
+            target_path.suffix.lower().lstrip(".")
+        )
+
         return templates.TemplateResponse(
             request,
             "view.html",
@@ -312,6 +316,7 @@ async def view_file_page(request: Request, repo_name: str, path: str = "") -> HT
                 "content": content,
                 "breadcrumb_parts": breadcrumb_parts,
                 "parent_path": parent_path,
+                "lang_class": lang_class,
             },
         )
     except Exception as e:

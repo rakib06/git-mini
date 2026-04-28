@@ -1393,6 +1393,72 @@ pre code {
     font-size: 0.8125rem;
 }
 
+/* File Extension Colors */
+.ext-py { color: #3572A5; }
+.ext-js { color: #f1e05a; }
+.ext-ts { color: #2b7489; }
+.ext-jsx { color: #61dafb; }
+.ext-tsx { color: #2b7489; }
+.ext-html, .ext-htm { color: #e34c26; }
+.ext-css { color: #563d7c; }
+.ext-scss, .ext-sass { color: #c6538c; }
+.ext-json { color: #292929; }
+.ext-xml { color: #0060ac; }
+.ext-yaml, .ext-yml { color: #cb171e; }
+.ext-md, .ext-markdown { color: #083fa1; }
+.ext-sh, .ext-bash, .ext-zsh { color: #89e051; }
+.ext-ps1 { color: #012456; }
+.ext-sql { color: #e38c00; }
+.ext-java { color: #b07219; }
+.ext-kt { color: #A97BFF; }
+.ext-c, .ext-h { color: #555555; }
+.ext-cpp, .ext-cc, .ext-hpp { color: #f34b7d; }
+.ext-cs { color: #178600; }
+.ext-go { color: #00ADD8; }
+.ext-rs { color: #dea584; }
+.ext-rb { color: #701516; }
+.ext-php { color: #4F5D95; }
+.ext-swift { color: #ffac45; }
+.ext-r { color: #198CE7; }
+.ext-dart { color: #00B4AB; }
+.ext-lua { color: #000080; }
+.ext-dockerfile { color: #384d54; }
+.ext-tf { color: #7b42bc; }
+.ext-ini, .ext-cfg { color: #1f425e; }
+.ext-toml { color: #9c4221; }
+.ext-vue { color: #41b883; }
+.ext-svelte { color: #ff3e00; }
+
+/* Language Badge */
+.language-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    background-color: var(--bg-light);
+    color: var(--text-secondary);
+    margin-left: 0.5rem;
+    text-transform: lowercase;
+    border: 1px solid var(--border-color);
+}
+
+/* Mirror Banner */
+.mirror-banner {
+    background-color: #ddf4ff;
+    border: 1px solid #54aeff;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    color: #0969da;
+}
+
+.mirror-banner p {
+    margin: 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .main-wrapper {
